@@ -1,0 +1,35 @@
+[package]
+name = "example"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+anyhow = "1.0.98"
+tokio = { version = "1.47.0", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+derive_more = { version = "2.0.1", features = ["full"] }
+serde = { version = "1.0.219", features = ["derive"] }
+schemars = "1.0.4"
+thiserror = "2.0.12"
+aide = { git = "https://github.com/Zizico2/aide.git", branch = "feat/typed-routing-with", features = [
+    "macros",
+    "scalar",
+    "axum",
+    "axum-json",
+    "axum-query",
+    "axum-extra-typed-routing",
+] }
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "sqlite",
+    "macros",
+    "uuid",
+    "json",
+    "runtime-tokio",
+    "tls-rustls",
+    "migrate",
+] }
+
+embedded-adapter = { version = "0.1.0", path = "../" }
+surgeflow = { version = "0.1.0", git = "https://github.com/Zizico2/rust-workflow-2.git" }
