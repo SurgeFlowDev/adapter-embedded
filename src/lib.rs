@@ -8,7 +8,7 @@ pub mod receivers;
 pub mod senders;
 
 #[derive(derive_more::Debug, thiserror::Error)]
-pub enum AwsAdapterError<P: Project> {
+pub enum EmbeddedAdapterError<P: Project> {
     #[error("failed to receive message")]
     ReceiveMessageError(#[from] RecvError),
     #[error("failed to send step")]

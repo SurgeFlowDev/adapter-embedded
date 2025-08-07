@@ -1,5 +1,5 @@
 use embedded_adapter::MIGRATOR;
-use embedded_adapter::dependencies::{AwsAdapterConfig, AwsDependencyManager};
+use embedded_adapter::dependencies::{EmbeddedAdapterConfig, EmbeddedDependencyManager};
 use sqlx::query;
 use surgeflow::main_handler;
 use tracing::Level;
@@ -13,18 +13,20 @@ mod workflows;
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
-    let config = AwsAdapterConfig {
+    let config = EmbeddedAdapterConfig {
         pg_connection_string: "sqlite::memory:".into(),
     };
 
-    let mut dependency_manager = AwsDependencyManager::new(config);
+    let pool = sqlx::SqlitePool::connect(&config.pg_connection_string)
+        .await
+        .expect("Failed to connect to SQLite database");
 
-    let pool = dependency_manager.sqlx_pool().await;
-
-    MIGRATOR.run(pool).await?;
+    MIGRATOR.run(&pool).await?;
     query("INSERT INTO workflows (name) VALUES ('workflow_1'), ('workflow_2')")
-        .execute(pool)
+        .execute(&pool)
         .await?;
+
+    let dependency_manager = EmbeddedDependencyManager::new(config);
 
     let project = MyProject {
         workflow_1: Workflow1 {},

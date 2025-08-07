@@ -24,30 +24,30 @@ use surgeflow_types::{
 };
 
 use super::{
-    AwsAdapterError,
-    managers::{AwsPersistenceManager, AwsSqsStepsAwaitingEventManager},
+    EmbeddedAdapterError,
+    managers::{EmbeddedPersistenceManager, EmbeddedSqsStepsAwaitingEventManager},
     receivers::{
-        AwsSqsActiveStepReceiver, AwsSqsCompletedInstanceReceiver, AwsSqsCompletedStepReceiver,
-        AwsSqsEventReceiver, AwsSqsFailedInstanceReceiver, AwsSqsFailedStepReceiver,
-        AwsSqsNewInstanceReceiver, AwsSqsNextStepReceiver,
+        EmbeddedSqsActiveStepReceiver, EmbeddedSqsCompletedInstanceReceiver, EmbeddedSqsCompletedStepReceiver,
+        EmbeddedSqsEventReceiver, EmbeddedSqsFailedInstanceReceiver, EmbeddedSqsFailedStepReceiver,
+        EmbeddedSqsNewInstanceReceiver, EmbeddedSqsNextStepReceiver,
     },
     senders::{
-        AwsSqsActiveStepSender, AwsSqsCompletedStepSender, AwsSqsEventSender,
-        AwsSqsFailedInstanceSender, AwsSqsFailedStepSender, AwsSqsNewInstanceSender,
-        AwsSqsNextStepSender,
+        EmbeddedSqsActiveStepSender, EmbeddedSqsCompletedStepSender, EmbeddedSqsEventSender,
+        EmbeddedSqsFailedInstanceSender, EmbeddedSqsFailedStepSender, EmbeddedSqsNewInstanceSender,
+        EmbeddedSqsNextStepSender,
     },
 };
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct AwsAdapterConfig {
+pub struct EmbeddedAdapterConfig {
     /// The connection string for the PostgreSQL database
     /// This is used for persistent step management
     pub pg_connection_string: String,
 }
 
 #[derive(derive_more::Debug)]
-pub struct AwsDependencyManager<P: Project> {
+pub struct EmbeddedDependencyManager<P: Project> {
     steps_awaiting_event_map: Arc<HashMap<WorkflowInstanceId, FullyQualifiedStep<P>>>,
     next_step_channel: Option<(
         Sender<FullyQualifiedStep<P>>,
@@ -73,11 +73,11 @@ pub struct AwsDependencyManager<P: Project> {
     new_event_channel: Option<(Sender<InstanceEvent<P>>, Receiver<InstanceEvent<P>>)>,
     //
     sqlx_pool: Option<SqlitePool>,
-    config: AwsAdapterConfig,
+    config: EmbeddedAdapterConfig,
 }
 
-impl<P: Project> AwsDependencyManager<P> {
-    pub fn new(config: AwsAdapterConfig) -> Self {
+impl<P: Project> EmbeddedDependencyManager<P> {
+    pub fn new(config: EmbeddedAdapterConfig) -> Self {
         Self {
             steps_awaiting_event_map: Arc::new(HashMap::new()),
             sqlx_pool: None,
@@ -94,7 +94,7 @@ impl<P: Project> AwsDependencyManager<P> {
     }
 }
 
-impl<P: Project> AwsDependencyManager<P> {
+impl<P: Project> EmbeddedDependencyManager<P> {
     fn steps_awaiting_event_map(&self) -> Arc<HashMap<WorkflowInstanceId, FullyQualifiedStep<P>>> {
         self.steps_awaiting_event_map.clone()
     }
@@ -211,7 +211,7 @@ impl<P: Project> AwsDependencyManager<P> {
         &self.new_event_channel.as_ref().unwrap().1
     }
 
-    pub async fn sqlx_pool(&mut self) -> &SqlitePool {
+    async fn sqlx_pool(&mut self) -> &SqlitePool {
         if self.sqlx_pool.is_none() {
             self.sqlx_pool = Some(
                 SqlitePool::connect(&self.config.pg_connection_string)
@@ -223,16 +223,16 @@ impl<P: Project> AwsDependencyManager<P> {
     }
 }
 
-impl<P: Project> CompletedInstanceWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type CompletedInstanceReceiver = AwsSqsCompletedInstanceReceiver<P>;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> CompletedInstanceWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type CompletedInstanceReceiver = EmbeddedSqsCompletedInstanceReceiver<P>;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn completed_instance_worker_dependencies(
         &mut self,
     ) -> Result<CompletedInstanceWorkerDependencies<P, Self::CompletedInstanceReceiver>, Self::Error>
     {
         let completed_instance_receiver =
-            AwsSqsCompletedInstanceReceiver::new(self.completed_instance_receiver().clone());
+            EmbeddedSqsCompletedInstanceReceiver::new(self.completed_instance_receiver().clone());
 
         Ok(CompletedInstanceWorkerDependencies::new(
             completed_instance_receiver,
@@ -240,11 +240,11 @@ impl<P: Project> CompletedInstanceWorkerDependencyProvider<P> for AwsDependencyM
     }
 }
 
-impl<P: Project> CompletedStepWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type CompletedStepReceiver = AwsSqsCompletedStepReceiver<P>;
-    type NextStepSender = AwsSqsNextStepSender<P>;
-    type PersistenceManager = AwsPersistenceManager;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> CompletedStepWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type CompletedStepReceiver = EmbeddedSqsCompletedStepReceiver<P>;
+    type NextStepSender = EmbeddedSqsNextStepSender<P>;
+    type PersistenceManager = EmbeddedPersistenceManager;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn completed_step_worker_dependencies(
         &mut self,
@@ -258,11 +258,11 @@ impl<P: Project> CompletedStepWorkerDependencyProvider<P> for AwsDependencyManag
         Self::Error,
     > {
         let completed_step_receiver =
-            AwsSqsCompletedStepReceiver::<P>::new(self.completed_step_receiver().clone());
+            EmbeddedSqsCompletedStepReceiver::<P>::new(self.completed_step_receiver().clone());
 
-        let next_step_sender = AwsSqsNextStepSender::<P>::new(self.next_step_sender().clone());
+        let next_step_sender = EmbeddedSqsNextStepSender::<P>::new(self.next_step_sender().clone());
 
-        let persistence_manager = AwsPersistenceManager::new(self.sqlx_pool().await.clone());
+        let persistence_manager = EmbeddedPersistenceManager::new(self.sqlx_pool().await.clone());
 
         Ok(CompletedStepWorkerDependencies::new(
             completed_step_receiver,
@@ -272,13 +272,13 @@ impl<P: Project> CompletedStepWorkerDependencyProvider<P> for AwsDependencyManag
     }
 }
 
-impl<P: Project> ActiveStepWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type ActiveStepReceiver = AwsSqsActiveStepReceiver<P>;
-    type ActiveStepSender = AwsSqsActiveStepSender<P>;
-    type FailedStepSender = AwsSqsFailedStepSender<P>;
-    type CompletedStepSender = AwsSqsCompletedStepSender<P>;
-    type PersistenceManager = AwsPersistenceManager;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> ActiveStepWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type ActiveStepReceiver = EmbeddedSqsActiveStepReceiver<P>;
+    type ActiveStepSender = EmbeddedSqsActiveStepSender<P>;
+    type FailedStepSender = EmbeddedSqsFailedStepSender<P>;
+    type CompletedStepSender = EmbeddedSqsCompletedStepSender<P>;
+    type PersistenceManager = EmbeddedPersistenceManager;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn active_step_worker_dependencies(
         &mut self,
@@ -294,18 +294,18 @@ impl<P: Project> ActiveStepWorkerDependencyProvider<P> for AwsDependencyManager<
         Self::Error,
     > {
         let active_step_receiver =
-            AwsSqsActiveStepReceiver::<P>::new(self.active_step_receiver().clone());
+            EmbeddedSqsActiveStepReceiver::<P>::new(self.active_step_receiver().clone());
 
         let active_step_sender =
-            AwsSqsActiveStepSender::<P>::new(self.active_step_sender().clone());
+            EmbeddedSqsActiveStepSender::<P>::new(self.active_step_sender().clone());
 
         let failed_step_sender =
-            AwsSqsFailedStepSender::<P>::new(self.failed_step_sender().clone());
+            EmbeddedSqsFailedStepSender::<P>::new(self.failed_step_sender().clone());
 
         let completed_step_sender =
-            AwsSqsCompletedStepSender::<P>::new(self.completed_step_sender().clone());
+            EmbeddedSqsCompletedStepSender::<P>::new(self.completed_step_sender().clone());
 
-        let persistence_manager = AwsPersistenceManager::new(self.sqlx_pool().await.clone());
+        let persistence_manager = EmbeddedPersistenceManager::new(self.sqlx_pool().await.clone());
 
         Ok(ActiveStepWorkerDependencies::new(
             active_step_receiver,
@@ -317,16 +317,16 @@ impl<P: Project> ActiveStepWorkerDependencyProvider<P> for AwsDependencyManager<
     }
 }
 
-impl<P: Project> FailedInstanceWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type FailedInstanceReceiver = AwsSqsFailedInstanceReceiver<P>;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> FailedInstanceWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type FailedInstanceReceiver = EmbeddedSqsFailedInstanceReceiver<P>;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn failed_instance_worker_dependencies(
         &mut self,
     ) -> Result<FailedInstanceWorkerDependencies<P, Self::FailedInstanceReceiver>, Self::Error>
     {
         let failed_instance_receiver =
-            AwsSqsFailedInstanceReceiver::<P>::new(self.failed_instance_receiver().clone());
+            EmbeddedSqsFailedInstanceReceiver::<P>::new(self.failed_instance_receiver().clone());
 
         Ok(FailedInstanceWorkerDependencies::new(
             failed_instance_receiver,
@@ -334,11 +334,11 @@ impl<P: Project> FailedInstanceWorkerDependencyProvider<P> for AwsDependencyMana
     }
 }
 
-impl<P: Project> FailedStepWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type FailedStepReceiver = AwsSqsFailedStepReceiver<P>;
-    type FailedInstanceSender = AwsSqsFailedInstanceSender<P>;
-    type PersistenceManager = AwsPersistenceManager;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> FailedStepWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type FailedStepReceiver = EmbeddedSqsFailedStepReceiver<P>;
+    type FailedInstanceSender = EmbeddedSqsFailedInstanceSender<P>;
+    type PersistenceManager = EmbeddedPersistenceManager;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn failed_step_worker_dependencies(
         &mut self,
@@ -352,12 +352,12 @@ impl<P: Project> FailedStepWorkerDependencyProvider<P> for AwsDependencyManager<
         Self::Error,
     > {
         let failed_step_receiver =
-            AwsSqsFailedStepReceiver::<P>::new(self.failed_step_receiver().clone());
+            EmbeddedSqsFailedStepReceiver::<P>::new(self.failed_step_receiver().clone());
 
         let failed_instance_sender =
-            AwsSqsFailedInstanceSender::<P>::new(self.failed_instance_sender().clone());
+            EmbeddedSqsFailedInstanceSender::<P>::new(self.failed_instance_sender().clone());
 
-        let persistence_manager = AwsPersistenceManager::new(self.sqlx_pool().await.clone());
+        let persistence_manager = EmbeddedPersistenceManager::new(self.sqlx_pool().await.clone());
 
         Ok(FailedStepWorkerDependencies::new(
             failed_step_receiver,
@@ -367,11 +367,11 @@ impl<P: Project> FailedStepWorkerDependencyProvider<P> for AwsDependencyManager<
     }
 }
 
-impl<P: Project> NewEventWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type ActiveStepSender = AwsSqsActiveStepSender<P>;
-    type EventReceiver = AwsSqsEventReceiver<P>;
-    type StepsAwaitingEventManager = AwsSqsStepsAwaitingEventManager<P>;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> NewEventWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type ActiveStepSender = EmbeddedSqsActiveStepSender<P>;
+    type EventReceiver = EmbeddedSqsEventReceiver<P>;
+    type StepsAwaitingEventManager = EmbeddedSqsStepsAwaitingEventManager<P>;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn new_event_worker_dependencies(
         &mut self,
@@ -385,12 +385,12 @@ impl<P: Project> NewEventWorkerDependencyProvider<P> for AwsDependencyManager<P>
         Self::Error,
     > {
         let steps_awaiting_event_map = self.steps_awaiting_event_map().clone();
-        let new_event_receiver = AwsSqsEventReceiver::<P>::new(self.new_event_receiver().clone());
+        let new_event_receiver = EmbeddedSqsEventReceiver::<P>::new(self.new_event_receiver().clone());
         let active_step_sender =
-            AwsSqsActiveStepSender::<P>::new(self.active_step_sender().clone());
+            EmbeddedSqsActiveStepSender::<P>::new(self.active_step_sender().clone());
 
         let steps_awaiting_event_manager =
-            AwsSqsStepsAwaitingEventManager::<P>::new(steps_awaiting_event_map);
+            EmbeddedSqsStepsAwaitingEventManager::<P>::new(steps_awaiting_event_map);
 
         Ok(NewEventWorkerDependencies::new(
             active_step_sender,
@@ -400,11 +400,11 @@ impl<P: Project> NewEventWorkerDependencyProvider<P> for AwsDependencyManager<P>
     }
 }
 
-impl<P: Project> NewInstanceWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type NextStepSender = AwsSqsNextStepSender<P>;
-    type NewInstanceReceiver = AwsSqsNewInstanceReceiver<P>;
-    type PersistenceManager = AwsPersistenceManager;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> NewInstanceWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type NextStepSender = EmbeddedSqsNextStepSender<P>;
+    type NewInstanceReceiver = EmbeddedSqsNewInstanceReceiver<P>;
+    type PersistenceManager = EmbeddedPersistenceManager;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn new_instance_worker_dependencies(
         &mut self,
@@ -418,11 +418,11 @@ impl<P: Project> NewInstanceWorkerDependencyProvider<P> for AwsDependencyManager
         Self::Error,
     > {
         let new_instance_receiver =
-            AwsSqsNewInstanceReceiver::<P>::new(self.new_instance_receiver().clone());
+            EmbeddedSqsNewInstanceReceiver::<P>::new(self.new_instance_receiver().clone());
 
-        let next_step_sender = AwsSqsNextStepSender::<P>::new(self.next_step_sender().clone());
+        let next_step_sender = EmbeddedSqsNextStepSender::<P>::new(self.next_step_sender().clone());
 
-        let persistence_manager = AwsPersistenceManager::new(self.sqlx_pool().await.clone());
+        let persistence_manager = EmbeddedPersistenceManager::new(self.sqlx_pool().await.clone());
 
         Ok(NewInstanceWorkerDependencies::new(
             next_step_sender,
@@ -432,12 +432,12 @@ impl<P: Project> NewInstanceWorkerDependencyProvider<P> for AwsDependencyManager
     }
 }
 
-impl<P: Project> NextStepWorkerDependencyProvider<P> for AwsDependencyManager<P> {
-    type NextStepReceiver = AwsSqsNextStepReceiver<P>;
-    type ActiveStepSender = AwsSqsActiveStepSender<P>;
-    type StepsAwaitingEventManager = AwsSqsStepsAwaitingEventManager<P>;
-    type PersistenceManager = AwsPersistenceManager;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> NextStepWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type NextStepReceiver = EmbeddedSqsNextStepReceiver<P>;
+    type ActiveStepSender = EmbeddedSqsActiveStepSender<P>;
+    type StepsAwaitingEventManager = EmbeddedSqsStepsAwaitingEventManager<P>;
+    type PersistenceManager = EmbeddedPersistenceManager;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn next_step_worker_dependencies(
         &mut self,
@@ -454,15 +454,15 @@ impl<P: Project> NextStepWorkerDependencyProvider<P> for AwsDependencyManager<P>
         let steps_awaiting_event_map = self.steps_awaiting_event_map().clone();
 
         let next_step_receiver =
-            AwsSqsNextStepReceiver::<P>::new(self.next_step_receiver().clone());
+            EmbeddedSqsNextStepReceiver::<P>::new(self.next_step_receiver().clone());
 
         let active_step_sender =
-            AwsSqsActiveStepSender::<P>::new(self.active_step_sender().clone());
+            EmbeddedSqsActiveStepSender::<P>::new(self.active_step_sender().clone());
 
         let steps_awaiting_event_manager =
-            AwsSqsStepsAwaitingEventManager::<P>::new(steps_awaiting_event_map);
+            EmbeddedSqsStepsAwaitingEventManager::<P>::new(steps_awaiting_event_map);
 
-        let persistence_manager = AwsPersistenceManager::new(self.sqlx_pool().await.clone());
+        let persistence_manager = EmbeddedPersistenceManager::new(self.sqlx_pool().await.clone());
 
         Ok(NextStepWorkerDependencies::new(
             next_step_receiver,
@@ -473,19 +473,19 @@ impl<P: Project> NextStepWorkerDependencyProvider<P> for AwsDependencyManager<P>
     }
 }
 
-impl<P: Project> ControlServerDependencyProvider<P> for AwsDependencyManager<P> {
-    type EventSender = AwsSqsEventSender<P>;
-    type NewInstanceSender = AwsSqsNewInstanceSender<P>;
-    type Error = AwsAdapterError<P>;
+impl<P: Project> ControlServerDependencyProvider<P> for EmbeddedDependencyManager<P> {
+    type EventSender = EmbeddedSqsEventSender<P>;
+    type NewInstanceSender = EmbeddedSqsNewInstanceSender<P>;
+    type Error = EmbeddedAdapterError<P>;
 
     async fn control_server_dependencies(
         &mut self,
     ) -> Result<ControlServerDependencies<P, Self::EventSender, Self::NewInstanceSender>, Self::Error>
     {
-        let new_event_sender = AwsSqsEventSender::<P>::new(self.new_event_sender().clone());
+        let new_event_sender = EmbeddedSqsEventSender::<P>::new(self.new_event_sender().clone());
 
         let new_instance_sender =
-            AwsSqsNewInstanceSender::<P>::new(self.new_instance_sender().clone());
+            EmbeddedSqsNewInstanceSender::<P>::new(self.new_instance_sender().clone());
 
         Ok(ControlServerDependencies::new(
             new_event_sender,
@@ -494,6 +494,6 @@ impl<P: Project> ControlServerDependencyProvider<P> for AwsDependencyManager<P> 
     }
 }
 
-impl<P: Project> DependencyManager<P> for AwsDependencyManager<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> DependencyManager<P> for EmbeddedDependencyManager<P> {
+    type Error = EmbeddedAdapterError<P>;
 }

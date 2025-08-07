@@ -7,23 +7,23 @@ use adapter_types::receivers::{
 };
 use std::marker::PhantomData;
 
-use crate::AwsAdapterError;
+use crate::EmbeddedAdapterError;
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsCompletedInstanceReceiver<P: Project> {
+pub struct EmbeddedSqsCompletedInstanceReceiver<P: Project> {
     receiver: Receiver<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> CompletedInstanceReceiver<P> for AwsSqsCompletedInstanceReceiver<P> {
+impl<P: Project> CompletedInstanceReceiver<P> for EmbeddedSqsCompletedInstanceReceiver<P> {
     type Handle = ();
-    type Error = AwsAdapterError<P>;
+    type Error = EmbeddedAdapterError<P>;
     async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
         let workflow_instance = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
 
         Ok((workflow_instance, ()))
     }
@@ -33,7 +33,7 @@ impl<P: Project> CompletedInstanceReceiver<P> for AwsSqsCompletedInstanceReceive
     }
 }
 
-impl<P: Project> AwsSqsCompletedInstanceReceiver<P> {
+impl<P: Project> EmbeddedSqsCompletedInstanceReceiver<P> {
     pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
         Self {
             receiver,
@@ -47,20 +47,20 @@ impl<P: Project> AwsSqsCompletedInstanceReceiver<P> {
 ///////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsFailedInstanceReceiver<P: Project> {
+pub struct EmbeddedSqsFailedInstanceReceiver<P: Project> {
     receiver: Receiver<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> FailedInstanceReceiver<P> for AwsSqsFailedInstanceReceiver<P> {
+impl<P: Project> FailedInstanceReceiver<P> for EmbeddedSqsFailedInstanceReceiver<P> {
     type Handle = ();
-    type Error = AwsAdapterError<P>;
+    type Error = EmbeddedAdapterError<P>;
     async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
         let workflow_instance = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
 
         Ok((workflow_instance, ()))
     }
@@ -70,7 +70,7 @@ impl<P: Project> FailedInstanceReceiver<P> for AwsSqsFailedInstanceReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsFailedInstanceReceiver<P> {
+impl<P: Project> EmbeddedSqsFailedInstanceReceiver<P> {
     pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
         Self {
             receiver,
@@ -84,20 +84,20 @@ impl<P: Project> AwsSqsFailedInstanceReceiver<P> {
 ///////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsNewInstanceReceiver<P: Project> {
+pub struct EmbeddedSqsNewInstanceReceiver<P: Project> {
     receiver: Receiver<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> NewInstanceReceiver<P> for AwsSqsNewInstanceReceiver<P> {
+impl<P: Project> NewInstanceReceiver<P> for EmbeddedSqsNewInstanceReceiver<P> {
     type Handle = ();
-    type Error = AwsAdapterError<P>;
+    type Error = EmbeddedAdapterError<P>;
     async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
         let workflow_instance = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
         Ok((workflow_instance, ()))
     }
 
@@ -106,7 +106,7 @@ impl<P: Project> NewInstanceReceiver<P> for AwsSqsNewInstanceReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsNewInstanceReceiver<P> {
+impl<P: Project> EmbeddedSqsNewInstanceReceiver<P> {
     pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
         Self {
             receiver,
@@ -116,19 +116,19 @@ impl<P: Project> AwsSqsNewInstanceReceiver<P> {
 }
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsEventReceiver<P: Project> {
+pub struct EmbeddedSqsEventReceiver<P: Project> {
     receiver: Receiver<InstanceEvent<P>>,
 }
 
-impl<P: Project> EventReceiver<P> for AwsSqsEventReceiver<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> EventReceiver<P> for EmbeddedSqsEventReceiver<P> {
+    type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(InstanceEvent<P>, Self::Handle), Self::Error> {
         let event = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
         Ok((event, ()))
     }
 
@@ -137,25 +137,25 @@ impl<P: Project> EventReceiver<P> for AwsSqsEventReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsEventReceiver<P> {
+impl<P: Project> EmbeddedSqsEventReceiver<P> {
     pub fn new(receiver: Receiver<InstanceEvent<P>>) -> Self {
         Self { receiver }
     }
 }
 #[derive(Debug, Clone)]
-pub struct AwsSqsNextStepReceiver<P: Project> {
+pub struct EmbeddedSqsNextStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> NextStepReceiver<P> for AwsSqsNextStepReceiver<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> NextStepReceiver<P> for EmbeddedSqsNextStepReceiver<P> {
+    type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
         let step = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
         Ok((step, ()))
     }
 
@@ -164,7 +164,7 @@ impl<P: Project> NextStepReceiver<P> for AwsSqsNextStepReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsNextStepReceiver<P> {
+impl<P: Project> EmbeddedSqsNextStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }
@@ -175,19 +175,19 @@ impl<P: Project> AwsSqsNextStepReceiver<P> {
 /////////////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsCompletedStepReceiver<P: Project> {
+pub struct EmbeddedSqsCompletedStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> CompletedStepReceiver<P> for AwsSqsCompletedStepReceiver<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> CompletedStepReceiver<P> for EmbeddedSqsCompletedStepReceiver<P> {
+    type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
         let step = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
         Ok((step, ()))
     }
 
@@ -196,7 +196,7 @@ impl<P: Project> CompletedStepReceiver<P> for AwsSqsCompletedStepReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsCompletedStepReceiver<P> {
+impl<P: Project> EmbeddedSqsCompletedStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }
@@ -207,19 +207,19 @@ impl<P: Project> AwsSqsCompletedStepReceiver<P> {
 /////////////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsFailedStepReceiver<P: Project> {
+pub struct EmbeddedSqsFailedStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> FailedStepReceiver<P> for AwsSqsFailedStepReceiver<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> FailedStepReceiver<P> for EmbeddedSqsFailedStepReceiver<P> {
+    type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
         let step = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
         Ok((step, ()))
     }
 
@@ -228,7 +228,7 @@ impl<P: Project> FailedStepReceiver<P> for AwsSqsFailedStepReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsFailedStepReceiver<P> {
+impl<P: Project> EmbeddedSqsFailedStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }
@@ -239,19 +239,19 @@ impl<P: Project> AwsSqsFailedStepReceiver<P> {
 /////////////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct AwsSqsActiveStepReceiver<P: Project> {
+pub struct EmbeddedSqsActiveStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> ActiveStepReceiver<P> for AwsSqsActiveStepReceiver<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> ActiveStepReceiver<P> for EmbeddedSqsActiveStepReceiver<P> {
+    type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
         let step = self
             .receiver
             .recv()
             .await
-            .map_err(AwsAdapterError::ReceiveMessageError)?;
+            .map_err(EmbeddedAdapterError::ReceiveMessageError)?;
         Ok((step, ()))
     }
 
@@ -260,7 +260,7 @@ impl<P: Project> ActiveStepReceiver<P> for AwsSqsActiveStepReceiver<P> {
     }
 }
 
-impl<P: Project> AwsSqsActiveStepReceiver<P> {
+impl<P: Project> EmbeddedSqsActiveStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }

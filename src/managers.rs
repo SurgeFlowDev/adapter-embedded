@@ -1,17 +1,17 @@
 use papaya::HashMap;
 use std::{marker::PhantomData, sync::Arc};
 
-use super::AwsAdapterError;
+use super::EmbeddedAdapterError;
 use adapter_types::managers::StepsAwaitingEventManager;
 use surgeflow_types::{FullyQualifiedStep, Project, WorkflowInstanceId};
 
 #[derive(Clone)]
-pub struct AwsSqsStepsAwaitingEventManager<P: Project> {
+pub struct EmbeddedSqsStepsAwaitingEventManager<P: Project> {
     map: Arc<HashMap<WorkflowInstanceId, FullyQualifiedStep<P>>>,
     _phantom: PhantomData<P>,
 }
 
-impl<P: Project> AwsSqsStepsAwaitingEventManager<P> {
+impl<P: Project> EmbeddedSqsStepsAwaitingEventManager<P> {
     // TODO: should be private
     pub fn new(map: Arc<HashMap<WorkflowInstanceId, FullyQualifiedStep<P>>>) -> Self {
         Self {
@@ -21,8 +21,8 @@ impl<P: Project> AwsSqsStepsAwaitingEventManager<P> {
     }
 }
 
-impl<P: Project> StepsAwaitingEventManager<P> for AwsSqsStepsAwaitingEventManager<P> {
-    type Error = AwsAdapterError<P>;
+impl<P: Project> StepsAwaitingEventManager<P> for EmbeddedSqsStepsAwaitingEventManager<P> {
+    type Error = EmbeddedAdapterError<P>;
     async fn get_step(
         &mut self,
         instance_id: WorkflowInstanceId,
@@ -53,19 +53,19 @@ mod persistence_manager {
     use adapter_types::managers::PersistenceManager;
     use surgeflow_types::{Project, StepId, WorkflowInstance, WorkflowInstanceId};
 
-    use crate::AwsAdapterError;
+    use crate::EmbeddedAdapterError;
 
     #[derive(Clone)]
-    pub struct AwsPersistenceManager {
+    pub struct EmbeddedPersistenceManager {
         sqlx_pool: SqlitePool,
     }
-    impl AwsPersistenceManager {
+    impl EmbeddedPersistenceManager {
         pub fn new(sqlx_pool: SqlitePool) -> Self {
             Self { sqlx_pool }
         }
     }
-    impl<P: Project> PersistenceManager<P> for AwsPersistenceManager {
-        type Error = AwsAdapterError<P>;
+    impl<P: Project> PersistenceManager<P> for EmbeddedPersistenceManager {
+        type Error = EmbeddedAdapterError<P>;
         async fn set_step_status(&self, step_id: StepId, status: i32) -> Result<(), Self::Error> {
             let step_id = step_id.to_string();
             query!(
@@ -88,7 +88,7 @@ mod persistence_manager {
             step_id: StepId,
             step: &P::Step,
         ) -> Result<(), Self::Error> {
-            let json_step = serde_json::to_value(step).map_err(AwsAdapterError::SerializeError)?;
+            let json_step = serde_json::to_value(step).map_err(EmbeddedAdapterError::SerializeError)?;
             let workflow_instance_id = workflow_instance_id.to_string();
             let step_id = step_id.to_string();
             query!(
@@ -110,7 +110,7 @@ mod persistence_manager {
             &self,
             step_id: StepId,
             output: Option<&P::Step>,
-        ) -> Result<(), AwsAdapterError<P>> {
+        ) -> Result<(), EmbeddedAdapterError<P>> {
             let output = serde_json::to_value(output).expect("TODO: handle serialization error");
             let step_id = step_id.to_string();
             query!(
@@ -151,4 +151,4 @@ mod persistence_manager {
         }
     }
 }
-pub use persistence_manager::AwsPersistenceManager;
+pub use persistence_manager::EmbeddedPersistenceManager;
