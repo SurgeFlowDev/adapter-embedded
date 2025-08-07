@@ -14,10 +14,10 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
     let config = EmbeddedAdapterConfig {
-        pg_connection_string: "sqlite::memory:".into(),
+        sqlite_connection_string: "sqlite::memory:".into(),
     };
 
-    let pool = sqlx::SqlitePool::connect(&config.pg_connection_string)
+    let pool = sqlx::SqlitePool::connect(&config.sqlite_connection_string)
         .await
         .expect("Failed to connect to SQLite database");
 

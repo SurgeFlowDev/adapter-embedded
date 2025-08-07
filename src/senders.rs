@@ -11,11 +11,11 @@ use adapter_types::senders::{
 use crate::EmbeddedAdapterError;
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsNextStepSender<P: Project> {
+pub struct EmbeddedNextStepSender<P: Project> {
     sender: Sender<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> NextStepSender<P> for EmbeddedSqsNextStepSender<P> {
+impl<P: Project> NextStepSender<P> for EmbeddedNextStepSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&mut self, step: FullyQualifiedStep<P>) -> Result<(), Self::Error> {
@@ -27,18 +27,18 @@ impl<P: Project> NextStepSender<P> for EmbeddedSqsNextStepSender<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsNextStepSender<P> {
+impl<P: Project> EmbeddedNextStepSender<P> {
     pub fn new(sender: Sender<FullyQualifiedStep<P>>) -> Self {
         Self { sender }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsActiveStepSender<P: Project> {
+pub struct EmbeddedActiveStepSender<P: Project> {
     sender: Sender<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> ActiveStepSender<P> for EmbeddedSqsActiveStepSender<P> {
+impl<P: Project> ActiveStepSender<P> for EmbeddedActiveStepSender<P> {
     type Error = EmbeddedAdapterError<P>;
     async fn send(&mut self, step: FullyQualifiedStep<P>) -> Result<(), Self::Error> {
         self.sender
@@ -49,18 +49,18 @@ impl<P: Project> ActiveStepSender<P> for EmbeddedSqsActiveStepSender<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsActiveStepSender<P> {
+impl<P: Project> EmbeddedActiveStepSender<P> {
     pub fn new(sender: Sender<FullyQualifiedStep<P>>) -> Self {
         Self { sender }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsFailedStepSender<P: Project> {
+pub struct EmbeddedFailedStepSender<P: Project> {
     sender: Sender<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> FailedStepSender<P> for EmbeddedSqsFailedStepSender<P> {
+impl<P: Project> FailedStepSender<P> for EmbeddedFailedStepSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&mut self, step: FullyQualifiedStep<P>) -> Result<(), Self::Error> {
@@ -72,18 +72,18 @@ impl<P: Project> FailedStepSender<P> for EmbeddedSqsFailedStepSender<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsFailedStepSender<P> {
+impl<P: Project> EmbeddedFailedStepSender<P> {
     pub fn new(sender: Sender<FullyQualifiedStep<P>>) -> Self {
         Self { sender }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsEventSender<P: Project> {
+pub struct EmbeddedEventSender<P: Project> {
     sender: Sender<InstanceEvent<P>>,
 }
 
-impl<P: Project> EventSender<P> for EmbeddedSqsEventSender<P> {
+impl<P: Project> EventSender<P> for EmbeddedEventSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&self, step: InstanceEvent<P>) -> Result<(), Self::Error> {
@@ -96,19 +96,19 @@ impl<P: Project> EventSender<P> for EmbeddedSqsEventSender<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsEventSender<P> {
+impl<P: Project> EmbeddedEventSender<P> {
     pub fn new(sender: Sender<InstanceEvent<P>>) -> Self {
         Self { sender }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsNewInstanceSender<P: Project> {
+pub struct EmbeddedNewInstanceSender<P: Project> {
     sender: Sender<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> NewInstanceSender<P> for EmbeddedSqsNewInstanceSender<P> {
+impl<P: Project> NewInstanceSender<P> for EmbeddedNewInstanceSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&self, step: WorkflowInstance) -> Result<(), Self::Error> {
@@ -121,7 +121,7 @@ impl<P: Project> NewInstanceSender<P> for EmbeddedSqsNewInstanceSender<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsNewInstanceSender<P> {
+impl<P: Project> EmbeddedNewInstanceSender<P> {
     pub fn new(sender: Sender<WorkflowInstance>) -> Self {
         Self {
             sender,
@@ -135,12 +135,12 @@ impl<P: Project> EmbeddedSqsNewInstanceSender<P> {
 ////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsFailedInstanceSender<P: Project> {
+pub struct EmbeddedFailedInstanceSender<P: Project> {
     sender: Sender<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> FailedInstanceSender<P> for EmbeddedSqsFailedInstanceSender<P> {
+impl<P: Project> FailedInstanceSender<P> for EmbeddedFailedInstanceSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&self, step: WorkflowInstance) -> Result<(), Self::Error> {
@@ -153,7 +153,7 @@ impl<P: Project> FailedInstanceSender<P> for EmbeddedSqsFailedInstanceSender<P> 
     }
 }
 
-impl<P: Project> EmbeddedSqsFailedInstanceSender<P> {
+impl<P: Project> EmbeddedFailedInstanceSender<P> {
     pub fn new(sender: Sender<WorkflowInstance>) -> Self {
         Self {
             sender,
@@ -167,12 +167,12 @@ impl<P: Project> EmbeddedSqsFailedInstanceSender<P> {
 ////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsCompletedInstanceSender<P: Project> {
+pub struct EmbeddedCompletedInstanceSender<P: Project> {
     sender: Sender<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> CompletedInstanceSender<P> for EmbeddedSqsCompletedInstanceSender<P> {
+impl<P: Project> CompletedInstanceSender<P> for EmbeddedCompletedInstanceSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&self, step: WorkflowInstance) -> Result<(), Self::Error> {
@@ -185,7 +185,7 @@ impl<P: Project> CompletedInstanceSender<P> for EmbeddedSqsCompletedInstanceSend
     }
 }
 
-impl<P: Project> EmbeddedSqsCompletedInstanceSender<P> {
+impl<P: Project> EmbeddedCompletedInstanceSender<P> {
     pub fn new(sender: Sender<WorkflowInstance>) -> Self {
         Self {
             sender,
@@ -199,11 +199,11 @@ impl<P: Project> EmbeddedSqsCompletedInstanceSender<P> {
 ////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsCompletedStepSender<P: Project> {
+pub struct EmbeddedCompletedStepSender<P: Project> {
     sender: Sender<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> CompletedStepSender<P> for EmbeddedSqsCompletedStepSender<P> {
+impl<P: Project> CompletedStepSender<P> for EmbeddedCompletedStepSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
     async fn send(&mut self, step: FullyQualifiedStep<P>) -> Result<(), Self::Error> {
@@ -215,7 +215,7 @@ impl<P: Project> CompletedStepSender<P> for EmbeddedSqsCompletedStepSender<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsCompletedStepSender<P> {
+impl<P: Project> EmbeddedCompletedStepSender<P> {
     pub fn new(sender: Sender<FullyQualifiedStep<P>>) -> Self {
         Self { sender }
     }

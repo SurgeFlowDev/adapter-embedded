@@ -10,12 +10,12 @@ use std::marker::PhantomData;
 use crate::EmbeddedAdapterError;
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsCompletedInstanceReceiver<P: Project> {
+pub struct EmbeddedCompletedInstanceReceiver<P: Project> {
     receiver: Receiver<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> CompletedInstanceReceiver<P> for EmbeddedSqsCompletedInstanceReceiver<P> {
+impl<P: Project> CompletedInstanceReceiver<P> for EmbeddedCompletedInstanceReceiver<P> {
     type Handle = ();
     type Error = EmbeddedAdapterError<P>;
     async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
@@ -33,7 +33,7 @@ impl<P: Project> CompletedInstanceReceiver<P> for EmbeddedSqsCompletedInstanceRe
     }
 }
 
-impl<P: Project> EmbeddedSqsCompletedInstanceReceiver<P> {
+impl<P: Project> EmbeddedCompletedInstanceReceiver<P> {
     pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
         Self {
             receiver,
@@ -47,12 +47,12 @@ impl<P: Project> EmbeddedSqsCompletedInstanceReceiver<P> {
 ///////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsFailedInstanceReceiver<P: Project> {
+pub struct EmbeddedFailedInstanceReceiver<P: Project> {
     receiver: Receiver<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> FailedInstanceReceiver<P> for EmbeddedSqsFailedInstanceReceiver<P> {
+impl<P: Project> FailedInstanceReceiver<P> for EmbeddedFailedInstanceReceiver<P> {
     type Handle = ();
     type Error = EmbeddedAdapterError<P>;
     async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
@@ -70,7 +70,7 @@ impl<P: Project> FailedInstanceReceiver<P> for EmbeddedSqsFailedInstanceReceiver
     }
 }
 
-impl<P: Project> EmbeddedSqsFailedInstanceReceiver<P> {
+impl<P: Project> EmbeddedFailedInstanceReceiver<P> {
     pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
         Self {
             receiver,
@@ -84,12 +84,12 @@ impl<P: Project> EmbeddedSqsFailedInstanceReceiver<P> {
 ///////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsNewInstanceReceiver<P: Project> {
+pub struct EmbeddedNewInstanceReceiver<P: Project> {
     receiver: Receiver<WorkflowInstance>,
     _marker: PhantomData<P>,
 }
 
-impl<P: Project> NewInstanceReceiver<P> for EmbeddedSqsNewInstanceReceiver<P> {
+impl<P: Project> NewInstanceReceiver<P> for EmbeddedNewInstanceReceiver<P> {
     type Handle = ();
     type Error = EmbeddedAdapterError<P>;
     async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
@@ -106,7 +106,7 @@ impl<P: Project> NewInstanceReceiver<P> for EmbeddedSqsNewInstanceReceiver<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsNewInstanceReceiver<P> {
+impl<P: Project> EmbeddedNewInstanceReceiver<P> {
     pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
         Self {
             receiver,
@@ -116,11 +116,11 @@ impl<P: Project> EmbeddedSqsNewInstanceReceiver<P> {
 }
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsEventReceiver<P: Project> {
+pub struct EmbeddedEventReceiver<P: Project> {
     receiver: Receiver<InstanceEvent<P>>,
 }
 
-impl<P: Project> EventReceiver<P> for EmbeddedSqsEventReceiver<P> {
+impl<P: Project> EventReceiver<P> for EmbeddedEventReceiver<P> {
     type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(InstanceEvent<P>, Self::Handle), Self::Error> {
@@ -137,17 +137,17 @@ impl<P: Project> EventReceiver<P> for EmbeddedSqsEventReceiver<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsEventReceiver<P> {
+impl<P: Project> EmbeddedEventReceiver<P> {
     pub fn new(receiver: Receiver<InstanceEvent<P>>) -> Self {
         Self { receiver }
     }
 }
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsNextStepReceiver<P: Project> {
+pub struct EmbeddedNextStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> NextStepReceiver<P> for EmbeddedSqsNextStepReceiver<P> {
+impl<P: Project> NextStepReceiver<P> for EmbeddedNextStepReceiver<P> {
     type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
@@ -164,7 +164,7 @@ impl<P: Project> NextStepReceiver<P> for EmbeddedSqsNextStepReceiver<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsNextStepReceiver<P> {
+impl<P: Project> EmbeddedNextStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }
@@ -175,11 +175,11 @@ impl<P: Project> EmbeddedSqsNextStepReceiver<P> {
 /////////////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsCompletedStepReceiver<P: Project> {
+pub struct EmbeddedCompletedStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> CompletedStepReceiver<P> for EmbeddedSqsCompletedStepReceiver<P> {
+impl<P: Project> CompletedStepReceiver<P> for EmbeddedCompletedStepReceiver<P> {
     type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
@@ -196,7 +196,7 @@ impl<P: Project> CompletedStepReceiver<P> for EmbeddedSqsCompletedStepReceiver<P
     }
 }
 
-impl<P: Project> EmbeddedSqsCompletedStepReceiver<P> {
+impl<P: Project> EmbeddedCompletedStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }
@@ -207,11 +207,11 @@ impl<P: Project> EmbeddedSqsCompletedStepReceiver<P> {
 /////////////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsFailedStepReceiver<P: Project> {
+pub struct EmbeddedFailedStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> FailedStepReceiver<P> for EmbeddedSqsFailedStepReceiver<P> {
+impl<P: Project> FailedStepReceiver<P> for EmbeddedFailedStepReceiver<P> {
     type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
@@ -228,7 +228,7 @@ impl<P: Project> FailedStepReceiver<P> for EmbeddedSqsFailedStepReceiver<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsFailedStepReceiver<P> {
+impl<P: Project> EmbeddedFailedStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }
@@ -239,11 +239,11 @@ impl<P: Project> EmbeddedSqsFailedStepReceiver<P> {
 /////////////////////////////////////////////////
 
 #[derive(Debug, Clone)]
-pub struct EmbeddedSqsActiveStepReceiver<P: Project> {
+pub struct EmbeddedActiveStepReceiver<P: Project> {
     receiver: Receiver<FullyQualifiedStep<P>>,
 }
 
-impl<P: Project> ActiveStepReceiver<P> for EmbeddedSqsActiveStepReceiver<P> {
+impl<P: Project> ActiveStepReceiver<P> for EmbeddedActiveStepReceiver<P> {
     type Error = EmbeddedAdapterError<P>;
     type Handle = ();
     async fn receive(&mut self) -> Result<(FullyQualifiedStep<P>, Self::Handle), Self::Error> {
@@ -260,7 +260,7 @@ impl<P: Project> ActiveStepReceiver<P> for EmbeddedSqsActiveStepReceiver<P> {
     }
 }
 
-impl<P: Project> EmbeddedSqsActiveStepReceiver<P> {
+impl<P: Project> EmbeddedActiveStepReceiver<P> {
     pub fn new(receiver: Receiver<FullyQualifiedStep<P>>) -> Self {
         Self { receiver }
     }

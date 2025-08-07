@@ -6,12 +6,12 @@ use adapter_types::managers::StepsAwaitingEventManager;
 use surgeflow_types::{FullyQualifiedStep, Project, WorkflowInstanceId};
 
 #[derive(Clone)]
-pub struct EmbeddedSqsStepsAwaitingEventManager<P: Project> {
+pub struct EmbeddedStepsAwaitingEventManager<P: Project> {
     map: Arc<HashMap<WorkflowInstanceId, FullyQualifiedStep<P>>>,
     _phantom: PhantomData<P>,
 }
 
-impl<P: Project> EmbeddedSqsStepsAwaitingEventManager<P> {
+impl<P: Project> EmbeddedStepsAwaitingEventManager<P> {
     // TODO: should be private
     pub fn new(map: Arc<HashMap<WorkflowInstanceId, FullyQualifiedStep<P>>>) -> Self {
         Self {
@@ -21,7 +21,7 @@ impl<P: Project> EmbeddedSqsStepsAwaitingEventManager<P> {
     }
 }
 
-impl<P: Project> StepsAwaitingEventManager<P> for EmbeddedSqsStepsAwaitingEventManager<P> {
+impl<P: Project> StepsAwaitingEventManager<P> for EmbeddedStepsAwaitingEventManager<P> {
     type Error = EmbeddedAdapterError<P>;
     async fn get_step(
         &mut self,
@@ -88,7 +88,8 @@ mod persistence_manager {
             step_id: StepId,
             step: &P::Step,
         ) -> Result<(), Self::Error> {
-            let json_step = serde_json::to_value(step).map_err(EmbeddedAdapterError::SerializeError)?;
+            let json_step =
+                serde_json::to_value(step).map_err(EmbeddedAdapterError::SerializeError)?;
             let workflow_instance_id = workflow_instance_id.to_string();
             let step_id = step_id.to_string();
             query!(
@@ -142,7 +143,7 @@ mod persistence_manager {
                 RETURNING "external_id"
                 "#,
                 external_id,
-                workflow_name                
+                workflow_name
             )
             .fetch_one(&self.sqlx_pool)
             .await?;
