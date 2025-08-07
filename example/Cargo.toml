@@ -31,5 +31,5 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "migrate",
 ] }
 
-embedded-adapter = { version = "0.1.0", path = "../" }
+adapter-embedded = { version = "0.1.0", path = "../" }
 surgeflow = { version = "0.1.0", git = "https://github.com/Zizico2/rust-workflow-2.git" }

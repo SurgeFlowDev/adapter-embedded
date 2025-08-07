@@ -3,6 +3,23 @@
 version = 4
 
 [[package]]
+name = "adapter-embedded"
+version = "0.1.0"
+dependencies = [
+ "adapter-types",
+ "async-channel 2.5.0",
+ "derive_more",
+ "papaya",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "surgeflow-types",
+ "thiserror 2.0.12",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "adapter-types"
 version = "0.1.0"
 source = "git+https://github.com/Zizico2/rust-workflow-2.git#7359bd04121ad785f5b243f136c0cc138fa162b9"
@@ -1738,23 +1755,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "embedded-adapter"
-version = "0.1.0"
-dependencies = [
- "adapter-types",
- "async-channel 2.5.0",
- "derive_more",
- "papaya",
- "serde",
- "serde_json",
- "sqlx",
- "surgeflow-types",
- "thiserror 2.0.12",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "encoding_rs"
 version = "0.8.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1821,10 +1821,10 @@ dependencies = [
 name = "example"
 version = "0.1.0"
 dependencies = [
+ "adapter-embedded",
  "aide",
  "anyhow",
  "derive_more",
- "embedded-adapter",
  "schemars",
  "serde",
  "sqlx",

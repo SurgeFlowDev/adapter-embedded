@@ -1,5 +1,5 @@
-use embedded_adapter::MIGRATOR;
-use embedded_adapter::dependencies::{EmbeddedAdapterConfig, EmbeddedDependencyManager};
+use adapter_embedded::MIGRATOR;
+use adapter_embedded::dependencies::{EmbeddedAdapterConfig, EmbeddedDependencyManager};
 use sqlx::query;
 use surgeflow::main_handler;
 use tracing::Level;
