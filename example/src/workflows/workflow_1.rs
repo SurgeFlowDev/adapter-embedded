@@ -5,7 +5,7 @@ use surgeflow::{
     ConvertingProjectEventToWorkflowEventError, ConvertingProjectStepToWorkflowStepError,
     ConvertingWorkflowEventToEventError, ConvertingWorkflowStepToStepError, Event, Immediate,
     Project, ProjectStep, Step, StepResult, StepSettings, SurgeflowWorkflowStepError, TryFromRef,
-    Workflow, WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, next_step,
+    Workflow, WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, next_step, workflow,
 };
 
 use crate::workflows::{MyProject, MyProjectEvent};
@@ -15,13 +15,11 @@ use crate::workflows::{MyProject, MyProjectEvent};
 #[derive(Clone, Debug)]
 pub struct Workflow1 {}
 
+#[workflow]
 impl Workflow for Workflow1 {
     type Project = MyProject;
-
-    type Event = Workflow1Event;
-
-    type Step = Workflow1Step;
-
+    type Step = step!(Step0, Step1);
+    type Event = event!(Event0);
     const NAME: &'static str = "workflow_1";
 
     fn entrypoint() -> WorkflowStepWithSettings<Self> {
@@ -29,11 +27,30 @@ impl Workflow for Workflow1 {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-pub enum Workflow1Step {
-    A(Step0),
-    B(Step1),
-}
+// impl Workflow for Workflow1 {
+//     type Project = MyProject;
+//     type Event = Workflow1Event;
+//     type Step = Workflow1Step;
+
+//     const NAME: &'static str = "workflow_1";
+
+//     fn entrypoint() -> WorkflowStepWithSettings<Self> {
+//         next_step(Step0).max_retries(3).call()
+//     }
+// }
+
+// #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
+// pub enum Workflow1Step {
+//     A(Step0),
+//     B(Step1),
+// }
+
+// #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+// pub enum Workflow1Event {
+//     A(Event0),
+//     #[serde(skip)]
+//     Immediate(Immediate),
+// }
 
 #[derive(thiserror::Error, Debug)]
 pub enum Workflow1StepError {
@@ -70,48 +87,6 @@ impl TryFrom<<<MyProject as Project>::Step as ProjectStep>::Error>
         }
     }
 }
-
-//////////// WorkflowStep::Error <-> Step::Error conversions
-
-impl From<<Step0 as Step>::Error> for <<Workflow1 as Workflow>::Step as WorkflowStep>::Error {
-    fn from(error: <Step0 as Step>::Error) -> Self {
-        Self::A(error)
-    }
-}
-
-impl From<<Step1 as Step>::Error> for <<Workflow1 as Workflow>::Step as WorkflowStep>::Error {
-    fn from(error: <Step1 as Step>::Error) -> Self {
-        Self::B(error)
-    }
-}
-
-impl TryFrom<<<Workflow1 as Workflow>::Step as WorkflowStep>::Error> for <Step1 as Step>::Error {
-    type Error = ConvertingWorkflowStepToStepError;
-
-    fn try_from(
-        error: <<Workflow1 as Workflow>::Step as WorkflowStep>::Error,
-    ) -> Result<Self, Self::Error> {
-        match error {
-            Workflow1StepError::B(e) => Ok(e),
-            _ => Err(ConvertingWorkflowStepToStepError),
-        }
-    }
-}
-
-impl TryFrom<<<Workflow1 as Workflow>::Step as WorkflowStep>::Error> for <Step0 as Step>::Error {
-    type Error = ConvertingWorkflowStepToStepError;
-
-    fn try_from(
-        error: <<Workflow1 as Workflow>::Step as WorkflowStep>::Error,
-    ) -> Result<Self, Self::Error> {
-        match error {
-            Workflow1StepError::A(e) => Ok(e),
-            _ => Err(ConvertingWorkflowStepToStepError),
-        }
-    }
-}
-
-////////////
 
 impl WorkflowStep for Workflow1Step {
     type Workflow = Workflow1;
@@ -204,13 +179,6 @@ impl Step for Step1 {
 }
 
 // events
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub enum Workflow1Event {
-    A(Event0),
-    #[serde(skip)]
-    Immediate(Immediate),
-}
 
 impl WorkflowEvent for Workflow1Event {
     type Workflow = Workflow1;
