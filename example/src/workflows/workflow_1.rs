@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use surgeflow::{
     ConvertingProjectEventToWorkflowEventError, ConvertingProjectStepToWorkflowStepError,
     ConvertingWorkflowEventToEventError, ConvertingWorkflowStepToStepError, Event, Immediate,
-    Project, ProjectStep, Step, StepSettings, SurgeflowWorkflowStepError, TryFromRef, Workflow,
-    WorkflowEvent, WorkflowStep, WorkflowStepWithSettings,
+    Project, ProjectStep, Step, StepResult, StepSettings, SurgeflowWorkflowStepError, TryFromRef,
+    Workflow, WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, step_ok,
 };
 
 use crate::workflows::{MyProject, MyProjectEvent};
@@ -170,9 +170,6 @@ pub enum Step0Error {
     Unknown,
 }
 
-type StepResult<S> =
-    Result<Option<WorkflowStepWithSettings<<S as Step>::Workflow>>, <S as Step>::Error>;
-
 // impl<S: Step> From<S> for Option<WorkflowStepWithSettings<<S as Step>::Workflow>> {
 //     fn from(step: S) -> Self {
 //         Some(WorkflowStepWithSettings {
@@ -189,12 +186,7 @@ impl Step for Step0 {
 
     async fn run(&self, wf: Self::Workflow, event: Self::Event) -> StepResult<Self> {
         tracing::info!("Running Step0 in Workflow1");
-        let step = WorkflowStepWithSettings::builder()
-            .step(Step1)
-            .settings(StepSettings::builder().max_retries(3).build())
-            .build();
-        Ok(Some(step))
-        // Ok(Step1.into())
+        Ok(step_ok(Step1).max_retries(3).call())
     }
 }
 
