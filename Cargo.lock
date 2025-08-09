@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "adapter-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#479be38d0cf2d7ac536b561d95524e0de236cf96"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#5e96ffd574ec6660f3b47f2141997409ffee7e87"
 dependencies = [
  "surgeflow-types",
 ]
@@ -413,7 +413,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "control-server"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#479be38d0cf2d7ac536b561d95524e0de236cf96"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#5e96ffd574ec6660f3b47f2141997409ffee7e87"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2133,7 +2133,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "surgeflow"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#479be38d0cf2d7ac536b561d95524e0de236cf96"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#5e96ffd574ec6660f3b47f2141997409ffee7e87"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2152,7 +2152,7 @@ dependencies = [
 [[package]]
 name = "surgeflow-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#479be38d0cf2d7ac536b561d95524e0de236cf96"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#5e96ffd574ec6660f3b47f2141997409ffee7e87"
 dependencies = [
  "bon",
  "derive_more",

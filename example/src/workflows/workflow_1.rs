@@ -5,7 +5,7 @@ use surgeflow::{
     ConvertingProjectEventToWorkflowEventError, ConvertingProjectStepToWorkflowStepError,
     ConvertingWorkflowEventToEventError, ConvertingWorkflowStepToStepError, Event, Immediate,
     Project, ProjectStep, Step, StepResult, StepSettings, SurgeflowWorkflowStepError, TryFromRef,
-    Workflow, WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, step_ok,
+    Workflow, WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, next_step,
 };
 
 use crate::workflows::{MyProject, MyProjectEvent};
@@ -25,10 +25,7 @@ impl Workflow for Workflow1 {
     const NAME: &'static str = "workflow_1";
 
     fn entrypoint() -> WorkflowStepWithSettings<Self> {
-        WorkflowStepWithSettings {
-            step: Workflow1Step::A(Step0),
-            settings: StepSettings { max_retries: 3 },
-        }
+        next_step(Step0).max_retries(3).call()
     }
 }
 
@@ -78,13 +75,13 @@ impl TryFrom<<<MyProject as Project>::Step as ProjectStep>::Error>
 
 impl From<<Step0 as Step>::Error> for <<Workflow1 as Workflow>::Step as WorkflowStep>::Error {
     fn from(error: <Step0 as Step>::Error) -> Self {
-        Workflow1StepError::A(error)
+        Self::A(error)
     }
 }
 
 impl From<<Step1 as Step>::Error> for <<Workflow1 as Workflow>::Step as WorkflowStep>::Error {
     fn from(error: <Step1 as Step>::Error) -> Self {
-        Workflow1StepError::B(error)
+        Self::B(error)
     }
 }
 
@@ -177,7 +174,7 @@ impl Step for Step0 {
 
     async fn run(&self, wf: Self::Workflow, event: Self::Event) -> StepResult<Self> {
         tracing::info!("Running Step0 in Workflow1");
-        Ok(step_ok(Step1).max_retries(3).call())
+        Ok(Some(next_step(Step1).max_retries(3).call()))
     }
 }
 
