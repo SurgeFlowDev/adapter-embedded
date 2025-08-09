@@ -27,39 +27,6 @@ impl Workflow for Workflow1 {
     }
 }
 
-// impl Workflow for Workflow1 {
-//     type Project = MyProject;
-//     type Event = Workflow1Event;
-//     type Step = Workflow1Step;
-
-//     const NAME: &'static str = "workflow_1";
-
-//     fn entrypoint() -> WorkflowStepWithSettings<Self> {
-//         next_step(Step0).max_retries(3).call()
-//     }
-// }
-
-// #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-// pub enum Workflow1Step {
-//     A(Step0),
-//     B(Step1),
-// }
-
-// #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-// pub enum Workflow1Event {
-//     A(Event0),
-//     #[serde(skip)]
-//     Immediate(Immediate),
-// }
-
-#[derive(thiserror::Error, Debug)]
-pub enum Workflow1StepError {
-    #[error("Step0 error: {0}")]
-    A(<Step0 as Step>::Error),
-    #[error("Step1 error: {0}")]
-    B(<Step1 as Step>::Error),
-}
-
 //////////// ProjectStep::Error <-> WorkflowStep::Error conversions
 
 impl From<<<Workflow1 as Workflow>::Step as WorkflowStep>::Error>
