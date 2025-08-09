@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use surgeflow::{
     ConvertingProjectEventToWorkflowEventError, ConvertingProjectStepToWorkflowStepError,
     ConvertingWorkflowEventToEventError, ConvertingWorkflowStepToStepError, Event, Immediate,
-    Project, ProjectStep, Step, StepResult, StepSettings, SurgeflowWorkflowStepError, TryFromRef,
-    Workflow, WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, next_step, workflow,
+    Project, ProjectStep, Step, StepResult, SurgeflowWorkflowStepError, TryFromRef, Workflow,
+    WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, next_step, workflow,
 };
 
 use crate::workflows::{MyProject, MyProjectEvent};
@@ -54,6 +54,8 @@ impl TryFrom<<<MyProject as Project>::Step as ProjectStep>::Error>
         }
     }
 }
+
+////////////////////////////////////////////////////////////////////
 
 impl WorkflowStep for Workflow1Step {
     type Workflow = Workflow1;
