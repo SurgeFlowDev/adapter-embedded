@@ -26,7 +26,7 @@ impl Workflow for Workflow1 {
 
     fn entrypoint() -> WorkflowStepWithSettings<Self> {
         WorkflowStepWithSettings {
-            step: Workflow1Step::Step0(Step0),
+            step: Workflow1Step::A(Step0),
             settings: StepSettings { max_retries: 3 },
         }
     }
@@ -34,16 +34,16 @@ impl Workflow for Workflow1 {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
 pub enum Workflow1Step {
-    Step0(Step0),
-    Step1(Step1),
+    A(Step0),
+    B(Step1),
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum Workflow1StepError {
     #[error("Step0 error: {0}")]
-    Step0(<Step0 as Step>::Error),
+    A(<Step0 as Step>::Error),
     #[error("Step1 error: {0}")]
-    Step1(<Step1 as Step>::Error),
+    B(<Step1 as Step>::Error),
 }
 
 //////////// ProjectStep::Error <-> WorkflowStep::Error conversions
@@ -78,13 +78,13 @@ impl TryFrom<<<MyProject as Project>::Step as ProjectStep>::Error>
 
 impl From<<Step0 as Step>::Error> for <<Workflow1 as Workflow>::Step as WorkflowStep>::Error {
     fn from(error: <Step0 as Step>::Error) -> Self {
-        Workflow1StepError::Step0(error)
+        Workflow1StepError::A(error)
     }
 }
 
 impl From<<Step1 as Step>::Error> for <<Workflow1 as Workflow>::Step as WorkflowStep>::Error {
     fn from(error: <Step1 as Step>::Error) -> Self {
-        Workflow1StepError::Step1(error)
+        Workflow1StepError::B(error)
     }
 }
 
@@ -95,7 +95,7 @@ impl TryFrom<<<Workflow1 as Workflow>::Step as WorkflowStep>::Error> for <Step1 
         error: <<Workflow1 as Workflow>::Step as WorkflowStep>::Error,
     ) -> Result<Self, Self::Error> {
         match error {
-            Workflow1StepError::Step1(e) => Ok(e),
+            Workflow1StepError::B(e) => Ok(e),
             _ => Err(ConvertingWorkflowStepToStepError),
         }
     }
@@ -108,7 +108,7 @@ impl TryFrom<<<Workflow1 as Workflow>::Step as WorkflowStep>::Error> for <Step0 
         error: <<Workflow1 as Workflow>::Step as WorkflowStep>::Error,
     ) -> Result<Self, Self::Error> {
         match error {
-            Workflow1StepError::Step0(e) => Ok(e),
+            Workflow1StepError::A(e) => Ok(e),
             _ => Err(ConvertingWorkflowStepToStepError),
         }
     }
@@ -131,29 +131,29 @@ impl WorkflowStep for Workflow1Step {
         SurgeflowWorkflowStepError<<Self as WorkflowStep>::Error>,
     > {
         let res = match self {
-            Workflow1Step::Step0(step) => step
+            Workflow1Step::A(step) => step
                 .run(wf, event.try_into()?)
                 .await
-                .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow1StepError::Step0(e)))?,
-            Workflow1Step::Step1(step) => step
+                .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow1StepError::A(e)))?,
+            Workflow1Step::B(step) => step
                 .run(wf, event.try_into()?)
                 .await
-                .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow1StepError::Step1(e)))?,
+                .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow1StepError::B(e)))?,
         };
         Ok(res)
     }
 
     fn is_event<T: Event + 'static>(&self) -> bool {
         match self {
-            Workflow1Step::Step0(_) => <Step0 as Step>::Event::is::<T>(),
-            Workflow1Step::Step1(_) => <Step1 as Step>::Event::is::<T>(),
+            Workflow1Step::A(_) => <Step0 as Step>::Event::is::<T>(),
+            Workflow1Step::B(_) => <Step1 as Step>::Event::is::<T>(),
         }
     }
 
     fn is_workflow_event(&self, event: &<Self::Workflow as Workflow>::Event) -> bool {
         match self {
-            Workflow1Step::Step0(_) => event.is_event::<<Step0 as Step>::Event>(),
-            Workflow1Step::Step1(_) => event.is_event::<<Step1 as Step>::Event>(),
+            Workflow1Step::A(_) => event.is_event::<<Step0 as Step>::Event>(),
+            Workflow1Step::B(_) => event.is_event::<<Step1 as Step>::Event>(),
         }
     }
 }
@@ -170,21 +170,31 @@ pub enum Step0Error {
     Unknown,
 }
 
+type StepResult<S> =
+    Result<Option<WorkflowStepWithSettings<<S as Step>::Workflow>>, <S as Step>::Error>;
+
+// impl<S: Step> From<S> for Option<WorkflowStepWithSettings<<S as Step>::Workflow>> {
+//     fn from(step: S) -> Self {
+//         Some(WorkflowStepWithSettings {
+//             step: step.into(),
+//             settings: StepSettings { max_retries: 0 },
+//         })
+//     }
+// }
+
 impl Step for Step0 {
     type Event = Event0;
     type Workflow = Workflow1;
     type Error = Step0Error;
 
-    async fn run(
-        &self,
-        wf: Self::Workflow,
-        event: Self::Event,
-    ) -> Result<Option<WorkflowStepWithSettings<Self::Workflow>>, <Self as Step>::Error> {
+    async fn run(&self, wf: Self::Workflow, event: Self::Event) -> StepResult<Self> {
         tracing::info!("Running Step0 in Workflow1");
-        Ok(Some(WorkflowStepWithSettings {
-            step: Workflow1Step::Step1(Step1),
-            settings: StepSettings { max_retries: 3 },
-        }))
+        let step = WorkflowStepWithSettings::builder()
+            .step(Step1)
+            .settings(StepSettings::builder().max_retries(3).build())
+            .build();
+        Ok(Some(step))
+        // Ok(Step1.into())
     }
 }
 
@@ -217,7 +227,7 @@ impl Step for Step1 {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum Workflow1Event {
-    Event0(Event0),
+    A(Event0),
     #[serde(skip)]
     Immediate(Immediate),
 }
@@ -227,7 +237,7 @@ impl WorkflowEvent for Workflow1Event {
 
     fn is_event<T: Event + 'static>(&self) -> bool {
         match self {
-            Workflow1Event::Event0(_) => Event0::is::<T>(),
+            Workflow1Event::A(_) => Event0::is::<T>(),
             Workflow1Event::Immediate(_) => Immediate::is::<T>(),
         }
     }
@@ -254,7 +264,7 @@ impl TryFrom<Workflow1Event> for Event0 {
     type Error = ConvertingWorkflowEventToEventError;
 
     fn try_from(event: Workflow1Event) -> Result<Self, Self::Error> {
-        if let Workflow1Event::Event0(event0) = event {
+        if let Workflow1Event::A(event0) = event {
             Ok(event0)
         } else {
             Err(ConvertingWorkflowEventToEventError)
@@ -292,7 +302,7 @@ pub struct Event0 {}
 
 impl From<Event0> for Workflow1Event {
     fn from(event: Event0) -> Self {
-        Workflow1Event::Event0(event)
+        Workflow1Event::A(event)
     }
 }
 
