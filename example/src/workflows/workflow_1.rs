@@ -170,15 +170,6 @@ pub enum Step0Error {
     Unknown,
 }
 
-// impl<S: Step> From<S> for Option<WorkflowStepWithSettings<<S as Step>::Workflow>> {
-//     fn from(step: S) -> Self {
-//         Some(WorkflowStepWithSettings {
-//             step: step.into(),
-//             settings: StepSettings { max_retries: 0 },
-//         })
-//     }
-// }
-
 impl Step for Step0 {
     type Event = Event0;
     type Workflow = Workflow1;
