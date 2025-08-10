@@ -51,7 +51,7 @@ mod persistence_manager {
     use sqlx::{SqlitePool, query};
 
     use adapter_types::managers::PersistenceManager;
-    use surgeflow_types::{Project, StepId, WorkflowInstance, WorkflowInstanceId, __Workflow};
+    use surgeflow_types::{NameExt, Project, StepId, WorkflowInstance, WorkflowInstanceId, __Workflow};
 
     use crate::EmbeddedAdapterError;
 
@@ -133,7 +133,7 @@ mod persistence_manager {
             workflow_instance: WorkflowInstance<P>,
         ) -> Result<WorkflowInstanceId, Self::Error> {
             let external_id = workflow_instance.external_id.to_string();
-            let workflow_name = String::from("TODO: workflow_instance.workflow_name");
+            let workflow_name = workflow_instance.workflow.name();
             query!(
                 r#"
                 INSERT INTO workflow_instances ("workflow_id", "external_id")

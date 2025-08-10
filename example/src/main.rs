@@ -3,37 +3,34 @@ use adapter_embedded::dependencies::{EmbeddedAdapterConfig, EmbeddedDependencyMa
 use sqlx::query;
 use surgeflow::main_handler;
 use tracing::Level;
-// use workflows::workflow_2::MyProject;
-// use workflows::workflow_1::Workflow1;
-// use workflows::workflow_2::Workflow2;
+
+use crate::workflows::workflow_2::MyProject;
+use crate::workflows::workflow_2::MyWorkflow;
 
 mod workflows;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    todo!()
-    // tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
-    // let config = EmbeddedAdapterConfig {
-    //     sqlite_connection_string: "sqlite::memory:".into(),
-    // };
+    let config = EmbeddedAdapterConfig {};
 
-    // let pool = sqlx::SqlitePool::connect(&config.sqlite_connection_string)
-    //     .await
-    //     .expect("Failed to connect to SQLite database");
+    let pool = sqlx::SqlitePool::connect("sqlite::memory:")
+        .await
+        .expect("Failed to connect to SQLite database");
 
-    // MIGRATOR.run(&pool).await?;
-    // query("INSERT INTO workflows (name) VALUES ('workflow_1'), ('workflow_2')")
-    //     .execute(&pool)
-    //     .await?;
+    MIGRATOR.run(&pool).await?;
+    query("INSERT OR IGNORE INTO workflows (name) VALUES ('MyWorkflow')")
+        .execute(&pool)
+        .await?;
 
-    // let dependency_manager = EmbeddedDependencyManager::new(config);
+    let dependency_manager = EmbeddedDependencyManager::new(config, pool);
 
-    // let project = MyProject {
-    //     // workflow_1: Workflow1 {},
-    //     workflow_2: Workflow2 {},
-    // };
+    let project = MyProject {
+        // workflow_1: Workflow1 {},
+        workflow: MyWorkflow {},
+    };
 
-    // main_handler(project, dependency_manager).await?;
-    // Ok(())
+    main_handler(project, dependency_manager).await?;
+    Ok(())
 }

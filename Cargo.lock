@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "adapter-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#206d9c1d3843aaaf02ebc961c60cce3bb04ff192"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
 dependencies = [
  "surgeflow-types",
 ]
@@ -413,7 +413,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "control-server"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#206d9c1d3843aaaf02ebc961c60cce3bb04ff192"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
 dependencies = [
  "adapter-types",
  "aide",
@@ -1237,7 +1237,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 [[package]]
 name = "macros"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#206d9c1d3843aaaf02ebc961c60cce3bb04ff192"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
 dependencies = [
  "darling 0.20.11",
  "proc-macro-crate",
@@ -1527,9 +1527,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.95"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02b3e5e68a3a1a02aad3ec490a98007cbc13c37cbe84a3cd7b8e406d76e7f778"
+checksum = "beef09f85ae72cea1ef96ba6870c51e6382ebfa4f0e85b643459331f3daa5be0"
 dependencies = [
  "unicode-ident",
 ]
@@ -2154,7 +2154,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "surgeflow"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#206d9c1d3843aaaf02ebc961c60cce3bb04ff192"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2174,7 +2174,7 @@ dependencies = [
 [[package]]
 name = "surgeflow-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#206d9c1d3843aaaf02ebc961c60cce3bb04ff192"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
 dependencies = [
  "bon",
  "derive_more",

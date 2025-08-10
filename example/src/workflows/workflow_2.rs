@@ -1,14 +1,17 @@
+use aide::axum::ApiRouter;
 use derive_more::{From, TryInto};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
-    __Event, __Step, __Workflow, EntrypointExt, Immediate, Project, StepWithSettings, TryAsRef,
-    TryFromRef, Workflow, next_step,
+    __Event, __Step, __Workflow, ArcAppState, EntrypointExt, Immediate, NameExt, Project,
+    ProjectWorkflowControl, StepWithSettings, TryAsRef, TryFromRef, Workflow, WorkflowControl,
+    next_step,
+    senders::{EventSender, NewInstanceSender},
 };
 
 #[derive(thiserror::Error, Debug)]
 #[error("Temporary error")]
-struct TempError;
+pub struct TempError;
 
 impl From<Immediate> for TempError {
     fn from(_: Immediate) -> Self {
@@ -23,7 +26,9 @@ impl From<TempError> for Immediate {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-struct MyProject;
+pub struct MyProject {
+    pub workflow: MyWorkflow,
+}
 
 impl Project for MyProject {
     type Workflow = ProjectWorkflow;
@@ -33,7 +38,11 @@ impl Project for MyProject {
         &self,
         step: &<Self::Workflow as __Workflow<Self>>::Step,
     ) -> Self::Workflow {
-        todo!()
+        match step {
+            MyProjectWorkflowStep::Workflow1(_) => {
+                ProjectWorkflow::Workflow1(self.workflow.clone())
+            }
+        }
     }
 
     // fn workflow<T: __Workflow<Self>>() -> Self::Workflow {
@@ -42,12 +51,12 @@ impl Project for MyProject {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-enum ProjectWorkflow {
+pub enum ProjectWorkflow {
     Workflow1(MyWorkflow),
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-enum ProjectShallowWorkflow {
+pub enum ProjectShallowWorkflow {
     Workflow1,
 }
 
@@ -59,28 +68,27 @@ impl EntrypointExt<MyProject> for ProjectShallowWorkflow {
     }
 }
 
-impl __Workflow<MyProject> for ProjectWorkflow {
-    type Step = MyProjectWorkflowStep;
-
+impl NameExt<MyProject> for ProjectShallowWorkflow {
     fn name(&self) -> &'static str {
         match self {
-            ProjectWorkflow::Workflow1(my_workflow) => my_workflow.name(),
-        }
-    }
-    fn shallow_workflow(&self) -> <MyProject as Project>::ShallowWorkflow {
-        match self {
-            ProjectWorkflow::Workflow1(workflow) => workflow.shallow_workflow(),
+            ProjectShallowWorkflow::Workflow1 => <MyWorkflow as Workflow<MyProject>>::NAME,
         }
     }
 }
 
+impl __Workflow<MyProject> for ProjectWorkflow {
+    type Step = MyProjectWorkflowStep;
+
+    
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-enum MyProjectWorkflowStep {
+pub enum MyProjectWorkflowStep {
     Workflow1(<MyWorkflow as __Workflow<MyProject>>::Step),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-enum MyProjectWorkflowStepEvent {
+pub enum MyProjectWorkflowStepEvent {
     Workflow1(
         <<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event,
     ),
@@ -173,7 +181,7 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-struct MyWorkflow;
+pub struct MyWorkflow;
 
 impl Workflow<MyProject> for MyWorkflow {
     const NAME: &'static str = "MyWorkflow";
@@ -187,12 +195,12 @@ impl Workflow<MyProject> for MyWorkflow {
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-enum MyWorkflowStep {
+pub enum MyWorkflowStep {
     Step0(MyStep),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-enum MyWorkflowStepEvent {
+pub enum MyWorkflowStepEvent {
     Immediate(Immediate),
 }
 impl TryFromRef<MyWorkflowStepEvent> for Immediate {
@@ -261,7 +269,7 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-struct MyStep;
+pub struct MyStep;
 
 impl __Step<MyProject, MyWorkflow> for MyStep {
     type Event = Immediate;
@@ -280,5 +288,24 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
 
     fn value_has_event_value(&self, e: &Self::Event) -> bool {
         <Self::Event as __Event<MyProject, MyWorkflow>>::value_is::<MyWorkflow, Self::Event>(e)
+    }
+}
+
+//////////////////////////////
+
+impl ProjectWorkflowControl<MyProject> for ProjectWorkflow {
+    async fn control_router<
+        NewEventSenderT: EventSender<MyProject>,
+        NewInstanceSenderT: NewInstanceSender<MyProject>,
+    >() -> anyhow::Result<ApiRouter<ArcAppState<MyProject, NewEventSenderT, NewInstanceSenderT>>>
+    {
+        // let workflow_1_router =
+        //     Workflow1::control_router::<NewEventSenderT, NewInstanceSenderT>().await?;
+        let workflow_2_router =
+            MyWorkflow::control_router::<NewEventSenderT, NewInstanceSenderT>().await?;
+
+        Ok(ApiRouter::new()
+            // .merge(workflow_1_router)
+            .merge(workflow_2_router))
     }
 }

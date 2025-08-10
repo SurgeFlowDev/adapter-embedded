@@ -40,9 +40,7 @@ use super::{
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct EmbeddedAdapterConfig {
-    pub sqlite_connection_string: String,
-}
+pub struct EmbeddedAdapterConfig {}
 
 #[derive(derive_more::Debug)]
 pub struct EmbeddedDependencyManager<P: Project> {
@@ -65,20 +63,21 @@ pub struct EmbeddedDependencyManager<P: Project> {
     )>,
     //
     new_instance_channel: Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
-    completed_instance_channel: Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
+    completed_instance_channel:
+        Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
     failed_instance_channel: Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
     //
     new_event_channel: Option<(Sender<InstanceEvent<P>>, Receiver<InstanceEvent<P>>)>,
     //
-    sqlx_pool: Option<SqlitePool>,
+    sqlx_pool: SqlitePool,
     config: EmbeddedAdapterConfig,
 }
 
 impl<P: Project> EmbeddedDependencyManager<P> {
-    pub fn new(config: EmbeddedAdapterConfig) -> Self {
+    pub fn new(config: EmbeddedAdapterConfig, sqlx_pool: SqlitePool) -> Self {
         Self {
             steps_awaiting_event_map: Arc::new(HashMap::new()),
-            sqlx_pool: None,
+            sqlx_pool,
             config,
             next_step_channel: None,
             active_step_channel: None,
@@ -210,16 +209,9 @@ impl<P: Project> EmbeddedDependencyManager<P> {
     }
 
     async fn sqlx_pool(&mut self) -> &SqlitePool {
-        if self.sqlx_pool.is_none() {
-            self.sqlx_pool = Some(
-                SqlitePool::connect(&self.config.sqlite_connection_string)
-                    .await
-                    .expect("Failed to connect to SQLite database"),
-            );
+        &self.sqlx_pool
         }
-        self.sqlx_pool.as_ref().unwrap()
     }
-}
 
 impl<P: Project> CompletedInstanceWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
     type CompletedInstanceReceiver = EmbeddedCompletedInstanceReceiver<P>;
