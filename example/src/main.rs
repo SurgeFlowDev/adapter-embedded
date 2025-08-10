@@ -4,7 +4,7 @@ use sqlx::query;
 use surgeflow::main_handler;
 use tracing::Level;
 use workflows::MyProject;
-use workflows::workflow_1::Workflow1;
+// use workflows::workflow_1::Workflow1;
 use workflows::workflow_2::Workflow2;
 
 mod workflows;
@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     let dependency_manager = EmbeddedDependencyManager::new(config);
 
     let project = MyProject {
-        workflow_1: Workflow1 {},
+        // workflow_1: Workflow1 {},
         workflow_2: Workflow2 {},
     };
 

@@ -65,8 +65,6 @@ impl WorkflowStep for Workflow1Step {
         &self,
         wf: Self::Workflow,
         event: <Self::Workflow as Workflow>::Event,
-        // TODO: WorkflowStep should not be hardcoded here, but rather there should be a "Workflow" associated type,
-        // where we can get the WorkflowStep type from
     ) -> Result<
         Option<WorkflowStepWithSettings<Self::Workflow>>,
         SurgeflowWorkflowStepError<<Self as WorkflowStep>::Error>,
@@ -86,15 +84,41 @@ impl WorkflowStep for Workflow1Step {
 
     fn is_event<T: Event + 'static>(&self) -> bool {
         match self {
-            Workflow1Step::A(_) => <Step0 as Step>::Event::is::<T>(),
-            Workflow1Step::B(_) => <Step1 as Step>::Event::is::<T>(),
+            Workflow1Step::A(step) => step.value_has_event::<T>(),
+            Workflow1Step::B(step) => step.value_has_event::<T>(),
         }
     }
 
     fn is_workflow_event(&self, event: &<Self::Workflow as Workflow>::Event) -> bool {
         match self {
-            Workflow1Step::A(_) => event.is_event::<<Step0 as Step>::Event>(),
+            Workflow1Step::A(step) => step.value_has_event::<<Step0 as Step>::Event>(),
+
             Workflow1Step::B(_) => event.is_event::<<Step1 as Step>::Event>(),
+        }
+    }
+}
+
+impl Event for Workflow1Event {}
+
+impl Step for Workflow1Step {
+    type Event = Workflow1Event;
+    type Workflow = Workflow1;
+    type Error = Workflow1StepError;
+
+    async fn run(
+        &self,
+        wf: Self::Workflow,
+        event: Self::Event,
+    ) -> Result<Option<WorkflowStepWithSettings<Self::Workflow>>, <Self as Step>::Error> {
+        match self {
+            Workflow1Step::A(step) => step
+                .run(wf, event.try_into().unwrap())
+                .await
+                .map_err(Workflow1StepError::A),
+            Workflow1Step::B(step) => step
+                .run(wf, event.try_into().unwrap())
+                .await
+                .map_err(Workflow1StepError::B),
         }
     }
 }

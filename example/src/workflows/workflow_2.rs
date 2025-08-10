@@ -2,10 +2,11 @@ use derive_more::{From, TryInto};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
-    ConvertingProjectEventToWorkflowEventError, ConvertingProjectStepToWorkflowStepError,
-    ConvertingWorkflowEventToEventError, ConvertingWorkflowStepToStepError, Event, Immediate,
-    Project, ProjectStep, Step, StepSettings, SurgeflowWorkflowStepError, TryFromRef, Workflow,
-    WorkflowEvent, WorkflowStep, WorkflowStepWithSettings,
+    BareEvent, ConvertingProjectEventToWorkflowEventError,
+    ConvertingProjectStepToWorkflowStepError, ConvertingWorkflowEventToEventError,
+    ConvertingWorkflowStepToStepError, Event, Immediate, Project, ProjectStep, Step, StepSettings,
+    SurgeflowWorkflowStepError, TryFromRef, Workflow, WorkflowEvent, WorkflowStep,
+    WorkflowStepWithSettings,
 };
 
 use crate::workflows::{MyProject, MyProjectEvent};
@@ -32,6 +33,59 @@ impl Workflow for Workflow2 {
     }
 }
 
+// pub trait Event:
+//     Serialize + for<'a> Deserialize<'a> + Clone + fmt::Debug + Send + JsonSchema + 'static
+// {
+//     fn value_is<T: Event + 'static>(&self) -> bool;
+// }
+
+impl Event for Workflow2Event {
+    fn value_is<T: Event + 'static>(&self) -> bool {
+        match self {
+            Workflow2Event::Event0(ev) => ev.value_is::<T>(),
+            Workflow2Event::Immediate(ev) => ev.value_is::<T>(),
+        }
+    }
+}
+
+impl From<SurgeflowWorkflowStepError<Workflow2StepError>> for Workflow2StepError {
+    fn from(error: SurgeflowWorkflowStepError<Workflow2StepError>) -> Self {
+        todo!();
+    }
+}
+
+impl From<Workflow2StepError> for SurgeflowWorkflowStepError<Workflow2StepError> {
+    fn from(error: Workflow2StepError) -> Self {
+        SurgeflowWorkflowStepError::StepError(error)
+    }
+}
+
+impl Step<Workflow2> for Workflow2Step {
+    type Event = Workflow2Event;
+    // type Workflow = Workflow2;
+    type Error = SurgeflowWorkflowStepError<Workflow2StepError>;
+
+    // Workflow2StepError;
+
+    async fn run(
+        &self,
+        wf: Workflow2,
+        event: Self::Event,
+    ) -> Result<Option<WorkflowStepWithSettings<Workflow2>>, <Self as Step<Workflow2>>::Error> {
+        let res = match self {
+            Workflow2Step::Step0(step) => step
+                .run(wf, event.try_into()?)
+                .await
+                .map_err(Workflow2StepError::Step0)?,
+            Workflow2Step::Step1(step) => step
+                .run(wf, event.try_into()?)
+                .await
+                .map_err(Workflow2StepError::Step1)?,
+        };
+        Ok(res)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
 pub enum Workflow2Step {
     Step0(Step0),
@@ -41,9 +95,9 @@ pub enum Workflow2Step {
 #[derive(thiserror::Error, Debug)]
 pub enum Workflow2StepError {
     #[error("Step0 error: {0}")]
-    Step0(<Step0 as Step>::Error),
+    Step0(<Step0 as Step<Workflow2>>::Error),
     #[error("Step1 error: {0}")]
-    Step1(<Step1 as Step>::Error),
+    Step1(<Step1 as Step<Workflow2>>::Error),
 }
 
 //////////// ProjectStep::Error <-> WorkflowStep::Error conversions
@@ -76,39 +130,47 @@ impl TryFrom<<<MyProject as Project>::Step as ProjectStep>::Error>
 
 //////////// WorkflowStep::Error <-> Step::Error conversions
 
-impl From<<Step0 as Step>::Error> for <<Workflow2 as Workflow>::Step as WorkflowStep>::Error {
-    fn from(error: <Step0 as Step>::Error) -> Self {
-        Workflow2StepError::Step0(error)
+impl From<<Step0 as Step<Workflow2>>::Error>
+    for <<Workflow2 as Workflow>::Step as WorkflowStep>::Error
+{
+    fn from(error: <Step0 as Step<Workflow2>>::Error) -> Self {
+        SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step0(error))
     }
 }
 
-impl From<<Step1 as Step>::Error> for <<Workflow2 as Workflow>::Step as WorkflowStep>::Error {
-    fn from(error: <Step1 as Step>::Error) -> Self {
-        Workflow2StepError::Step1(error)
+impl From<<Step1 as Step<Workflow2>>::Error>
+    for <<Workflow2 as Workflow>::Step as WorkflowStep>::Error
+{
+    fn from(error: <Step1 as Step<Workflow2>>::Error) -> Self {
+        SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step1(error))
     }
 }
 
-impl TryFrom<<<Workflow2 as Workflow>::Step as WorkflowStep>::Error> for <Step1 as Step>::Error {
+impl TryFrom<<<Workflow2 as Workflow>::Step as WorkflowStep>::Error>
+    for <Step1 as Step<Workflow2>>::Error
+{
     type Error = ConvertingWorkflowStepToStepError;
 
     fn try_from(
         error: <<Workflow2 as Workflow>::Step as WorkflowStep>::Error,
     ) -> Result<Self, Self::Error> {
         match error {
-            Workflow2StepError::Step1(e) => Ok(e),
+            SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step1(e)) => Ok(e),
             _ => Err(ConvertingWorkflowStepToStepError),
         }
     }
 }
 
-impl TryFrom<<<Workflow2 as Workflow>::Step as WorkflowStep>::Error> for <Step0 as Step>::Error {
+impl TryFrom<<<Workflow2 as Workflow>::Step as WorkflowStep>::Error>
+    for <Step0 as Step<Workflow2>>::Error
+{
     type Error = ConvertingWorkflowStepToStepError;
 
     fn try_from(
         error: <<Workflow2 as Workflow>::Step as WorkflowStep>::Error,
     ) -> Result<Self, Self::Error> {
         match error {
-            Workflow2StepError::Step0(e) => Ok(e),
+            SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step0(e)) => Ok(e),
             _ => Err(ConvertingWorkflowStepToStepError),
         }
     }
@@ -118,44 +180,44 @@ impl TryFrom<<<Workflow2 as Workflow>::Step as WorkflowStep>::Error> for <Step0 
 
 impl WorkflowStep for Workflow2Step {
     type Workflow = Workflow2;
-    type Error = Workflow2StepError;
+    type Error = <Self as Step<Workflow2>>::Error;
 
-    async fn run(
-        &self,
-        wf: Self::Workflow,
-        event: <Self::Workflow as Workflow>::Event,
-        // TODO: WorkflowStep should not be hardcoded here, but rather there should be a "Workflow" associated type,
-        // where we can get the WorkflowStep type from
-    ) -> Result<
-        Option<WorkflowStepWithSettings<Self::Workflow>>,
-        SurgeflowWorkflowStepError<<Self as WorkflowStep>::Error>,
-    > {
-        let res = match self {
-            Workflow2Step::Step0(step) => step
-                .run(wf, event.try_into()?)
-                .await
-                .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step0(e)))?,
-            Workflow2Step::Step1(step) => step
-                .run(wf, event.try_into()?)
-                .await
-                .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step1(e)))?,
-        };
-        Ok(res)
-    }
+    // async fn run(
+    //     &self,
+    //     wf: Self::Workflow,
+    //     event: <Self::Workflow as Workflow>::Event,
+    //     // TODO: WorkflowStep should not be hardcoded here, but rather there should be a "Workflow" associated type,
+    //     // where we can get the WorkflowStep type from
+    // ) -> Result<
+    //     Option<WorkflowStepWithSettings<Self::Workflow>>,
+    //     SurgeflowWorkflowStepError<<Self as WorkflowStep>::Error>,
+    // > {
+    //     let res = match self {
+    //         Workflow2Step::Step0(step) => step
+    //             .run(wf, event.try_into()?)
+    //             .await
+    //             .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step0(e)))?,
+    //         Workflow2Step::Step1(step) => step
+    //             .run(wf, event.try_into()?)
+    //             .await
+    //             .map_err(|e| SurgeflowWorkflowStepError::StepError(Workflow2StepError::Step1(e)))?,
+    //     };
+    //     Ok(res)
+    // }
 
-    fn is_event<T: Event + 'static>(&self) -> bool {
-        match self {
-            Workflow2Step::Step0(_) => <Step0 as Step>::Event::is::<T>(),
-            Workflow2Step::Step1(_) => <Step1 as Step>::Event::is::<T>(),
-        }
-    }
+    // fn is_event<T: Event + 'static>(&self) -> bool {
+    //     match self {
+    //         Workflow2Step::Step0(_) => <Step0 as Step<Workflow2>>::Event::is::<T>(),
+    //         Workflow2Step::Step1(_) => <Step1 as Step<Workflow2>>::Event::is::<T>(),
+    //     }
+    // }
 
-    fn is_workflow_event(&self, event: &<Self::Workflow as Workflow>::Event) -> bool {
-        match self {
-            Workflow2Step::Step0(_) => event.is_event::<<Step0 as Step>::Event>(),
-            Workflow2Step::Step1(_) => event.is_event::<<Step1 as Step>::Event>(),
-        }
-    }
+    // fn is_workflow_event(&self, event: &<Self::Workflow as Workflow>::Event) -> bool {
+    //     match self {
+    //         Workflow2Step::Step0(_) => event.is_event::<<Step0 as Step<Workflow2>>::Event>(),
+    //         Workflow2Step::Step1(_) => event.is_event::<<Step1 as Step<Workflow2>>::Event>(),
+    //     }
+    // }
 }
 
 ///// Steps
@@ -170,16 +232,15 @@ pub enum Step0Error {
     Unknown,
 }
 
-impl Step for Step0 {
+impl Step<Workflow2> for Step0 {
     type Event = Event0;
-    type Workflow = Workflow2;
     type Error = Step0Error;
 
     async fn run(
         &self,
-        wf: Self::Workflow,
+        wf: Workflow2,
         event: Self::Event,
-    ) -> Result<Option<WorkflowStepWithSettings<Self::Workflow>>, <Self as Step>::Error> {
+    ) -> Result<Option<WorkflowStepWithSettings<Workflow2>>, <Self as Step<Workflow2>>::Error> {
         tracing::info!("Running Step0 in Workflow2");
         Ok(Some(WorkflowStepWithSettings {
             step: Workflow2Step::Step1(Step1),
@@ -198,16 +259,15 @@ pub enum Step1Error {
     Unknown,
 }
 
-impl Step for Step1 {
+impl Step<Workflow2> for Step1 {
     type Event = Immediate;
-    type Workflow = Workflow2;
     type Error = Step1Error;
 
     async fn run(
         &self,
-        wf: Self::Workflow,
+        wf: Workflow2,
         event: Self::Event,
-    ) -> Result<Option<WorkflowStepWithSettings<Self::Workflow>>, <Self as Step>::Error> {
+    ) -> Result<Option<WorkflowStepWithSettings<Workflow2>>, <Self as Step<Workflow2>>::Error> {
         tracing::info!("Running Step1 in Workflow2");
         Ok(None)
     }
@@ -225,12 +285,12 @@ pub enum Workflow2Event {
 impl WorkflowEvent for Workflow2Event {
     type Workflow = Workflow2;
 
-    fn is_event<T: Event + 'static>(&self) -> bool {
-        match self {
-            Workflow2Event::Event0(_) => Event0::is::<T>(),
-            Workflow2Event::Immediate(_) => Immediate::is::<T>(),
-        }
-    }
+    // fn is_event<T: Event + 'static>(&self) -> bool {
+    //     match self {
+    //         Workflow2Event::Event0(_) => Event0::is::<T>(),
+    //         Workflow2Event::Immediate(_) => Immediate::is::<T>(),
+    //     }
+    // }
 }
 
 impl TryFrom<Workflow2Event> for Immediate {
@@ -296,4 +356,4 @@ impl From<Event0> for Workflow2Event {
     }
 }
 
-impl Event for Event0 {}
+impl BareEvent for Event0 {}
