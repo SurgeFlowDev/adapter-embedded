@@ -130,10 +130,10 @@ mod persistence_manager {
 
         async fn insert_instance(
             &self,
-            workflow_instance: WorkflowInstance,
+            workflow_instance: WorkflowInstance<P>,
         ) -> Result<WorkflowInstanceId, Self::Error> {
             let external_id = workflow_instance.external_id.to_string();
-            let workflow_name = String::from(workflow_instance.workflow_name);
+            let workflow_name = String::from("TODO: workflow_instance.workflow_name");
             query!(
                 r#"
                 INSERT INTO workflow_instances ("workflow_id", "external_id")

@@ -11,14 +11,14 @@ use crate::EmbeddedAdapterError;
 
 #[derive(Debug, Clone)]
 pub struct EmbeddedCompletedInstanceReceiver<P: Project> {
-    receiver: Receiver<WorkflowInstance>,
+    receiver: Receiver<WorkflowInstance<P>>,
     _marker: PhantomData<P>,
 }
 
 impl<P: Project> CompletedInstanceReceiver<P> for EmbeddedCompletedInstanceReceiver<P> {
     type Handle = ();
     type Error = EmbeddedAdapterError<P>;
-    async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
+    async fn receive(&mut self) -> Result<(WorkflowInstance<P>, Self::Handle), Self::Error> {
         let workflow_instance = self
             .receiver
             .recv()
@@ -34,7 +34,7 @@ impl<P: Project> CompletedInstanceReceiver<P> for EmbeddedCompletedInstanceRecei
 }
 
 impl<P: Project> EmbeddedCompletedInstanceReceiver<P> {
-    pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
+    pub fn new(receiver: Receiver<WorkflowInstance<P>>) -> Self {
         Self {
             receiver,
             _marker: PhantomData,
@@ -48,14 +48,14 @@ impl<P: Project> EmbeddedCompletedInstanceReceiver<P> {
 
 #[derive(Debug, Clone)]
 pub struct EmbeddedFailedInstanceReceiver<P: Project> {
-    receiver: Receiver<WorkflowInstance>,
+    receiver: Receiver<WorkflowInstance<P>>,
     _marker: PhantomData<P>,
 }
 
 impl<P: Project> FailedInstanceReceiver<P> for EmbeddedFailedInstanceReceiver<P> {
     type Handle = ();
     type Error = EmbeddedAdapterError<P>;
-    async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
+    async fn receive(&mut self) -> Result<(WorkflowInstance<P>, Self::Handle), Self::Error> {
         let workflow_instance = self
             .receiver
             .recv()
@@ -71,7 +71,7 @@ impl<P: Project> FailedInstanceReceiver<P> for EmbeddedFailedInstanceReceiver<P>
 }
 
 impl<P: Project> EmbeddedFailedInstanceReceiver<P> {
-    pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
+    pub fn new(receiver: Receiver<WorkflowInstance<P>>) -> Self {
         Self {
             receiver,
             _marker: PhantomData,
@@ -85,14 +85,14 @@ impl<P: Project> EmbeddedFailedInstanceReceiver<P> {
 
 #[derive(Debug, Clone)]
 pub struct EmbeddedNewInstanceReceiver<P: Project> {
-    receiver: Receiver<WorkflowInstance>,
+    receiver: Receiver<WorkflowInstance<P>>,
     _marker: PhantomData<P>,
 }
 
 impl<P: Project> NewInstanceReceiver<P> for EmbeddedNewInstanceReceiver<P> {
     type Handle = ();
     type Error = EmbeddedAdapterError<P>;
-    async fn receive(&mut self) -> Result<(WorkflowInstance, Self::Handle), Self::Error> {
+    async fn receive(&mut self) -> Result<(WorkflowInstance<P>, Self::Handle), Self::Error> {
         let workflow_instance = self
             .receiver
             .recv()
@@ -107,7 +107,7 @@ impl<P: Project> NewInstanceReceiver<P> for EmbeddedNewInstanceReceiver<P> {
 }
 
 impl<P: Project> EmbeddedNewInstanceReceiver<P> {
-    pub fn new(receiver: Receiver<WorkflowInstance>) -> Self {
+    pub fn new(receiver: Receiver<WorkflowInstance<P>>) -> Self {
         Self {
             receiver,
             _marker: PhantomData,

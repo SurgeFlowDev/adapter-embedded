@@ -64,9 +64,9 @@ pub struct EmbeddedDependencyManager<P: Project> {
         Receiver<FullyQualifiedStep<P>>,
     )>,
     //
-    new_instance_channel: Option<(Sender<WorkflowInstance>, Receiver<WorkflowInstance>)>,
-    completed_instance_channel: Option<(Sender<WorkflowInstance>, Receiver<WorkflowInstance>)>,
-    failed_instance_channel: Option<(Sender<WorkflowInstance>, Receiver<WorkflowInstance>)>,
+    new_instance_channel: Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
+    completed_instance_channel: Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
+    failed_instance_channel: Option<(Sender<WorkflowInstance<P>>, Receiver<WorkflowInstance<P>>)>,
     //
     new_event_channel: Option<(Sender<InstanceEvent<P>>, Receiver<InstanceEvent<P>>)>,
     //
@@ -152,14 +152,14 @@ impl<P: Project> EmbeddedDependencyManager<P> {
         }
         &self.completed_step_channel.as_ref().unwrap().1
     }
-    fn new_instance_sender(&mut self) -> &Sender<WorkflowInstance> {
+    fn new_instance_sender(&mut self) -> &Sender<WorkflowInstance<P>> {
         if self.new_instance_channel.is_none() {
             let (sender, receiver) = async_channel::unbounded();
             self.new_instance_channel = Some((sender, receiver));
         }
         &self.new_instance_channel.as_ref().unwrap().0
     }
-    fn new_instance_receiver(&mut self) -> &Receiver<WorkflowInstance> {
+    fn new_instance_receiver(&mut self) -> &Receiver<WorkflowInstance<P>> {
         if self.new_instance_channel.is_none() {
             let (sender, receiver) = async_channel::unbounded();
             self.new_instance_channel = Some((sender, receiver));
@@ -173,21 +173,21 @@ impl<P: Project> EmbeddedDependencyManager<P> {
     //     }
     //     &self.completed_instance_channel.as_ref().unwrap().0
     // }
-    fn completed_instance_receiver(&mut self) -> &Receiver<WorkflowInstance> {
+    fn completed_instance_receiver(&mut self) -> &Receiver<WorkflowInstance<P>> {
         if self.completed_instance_channel.is_none() {
             let (sender, receiver) = async_channel::unbounded();
             self.completed_instance_channel = Some((sender, receiver));
         }
         &self.completed_instance_channel.as_ref().unwrap().1
     }
-    fn failed_instance_sender(&mut self) -> &Sender<WorkflowInstance> {
+    fn failed_instance_sender(&mut self) -> &Sender<WorkflowInstance<P>> {
         if self.failed_instance_channel.is_none() {
             let (sender, receiver) = async_channel::unbounded();
             self.failed_instance_channel = Some((sender, receiver));
         }
         &self.failed_instance_channel.as_ref().unwrap().0
     }
-    fn failed_instance_receiver(&mut self) -> &Receiver<WorkflowInstance> {
+    fn failed_instance_receiver(&mut self) -> &Receiver<WorkflowInstance<P>> {
         if self.failed_instance_channel.is_none() {
             let (sender, receiver) = async_channel::unbounded();
             self.failed_instance_channel = Some((sender, receiver));

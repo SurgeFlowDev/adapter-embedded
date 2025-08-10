@@ -3,36 +3,37 @@ use adapter_embedded::dependencies::{EmbeddedAdapterConfig, EmbeddedDependencyMa
 use sqlx::query;
 use surgeflow::main_handler;
 use tracing::Level;
-use workflows::MyProject;
+// use workflows::workflow_2::MyProject;
 // use workflows::workflow_1::Workflow1;
-use workflows::workflow_2::Workflow2;
+// use workflows::workflow_2::Workflow2;
 
 mod workflows;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+    todo!()
+    // tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
-    let config = EmbeddedAdapterConfig {
-        sqlite_connection_string: "sqlite::memory:".into(),
-    };
+    // let config = EmbeddedAdapterConfig {
+    //     sqlite_connection_string: "sqlite::memory:".into(),
+    // };
 
-    let pool = sqlx::SqlitePool::connect(&config.sqlite_connection_string)
-        .await
-        .expect("Failed to connect to SQLite database");
+    // let pool = sqlx::SqlitePool::connect(&config.sqlite_connection_string)
+    //     .await
+    //     .expect("Failed to connect to SQLite database");
 
-    MIGRATOR.run(&pool).await?;
-    query("INSERT INTO workflows (name) VALUES ('workflow_1'), ('workflow_2')")
-        .execute(&pool)
-        .await?;
+    // MIGRATOR.run(&pool).await?;
+    // query("INSERT INTO workflows (name) VALUES ('workflow_1'), ('workflow_2')")
+    //     .execute(&pool)
+    //     .await?;
 
-    let dependency_manager = EmbeddedDependencyManager::new(config);
+    // let dependency_manager = EmbeddedDependencyManager::new(config);
 
-    let project = MyProject {
-        // workflow_1: Workflow1 {},
-        workflow_2: Workflow2 {},
-    };
+    // let project = MyProject {
+    //     // workflow_1: Workflow1 {},
+    //     workflow_2: Workflow2 {},
+    // };
 
-    main_handler(project, dependency_manager).await?;
-    Ok(())
+    // main_handler(project, dependency_manager).await?;
+    // Ok(())
 }

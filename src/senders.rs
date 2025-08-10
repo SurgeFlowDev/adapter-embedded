@@ -104,14 +104,14 @@ impl<P: Project> EmbeddedEventSender<P> {
 
 #[derive(Debug, Clone)]
 pub struct EmbeddedNewInstanceSender<P: Project> {
-    sender: Sender<WorkflowInstance>,
+    sender: Sender<WorkflowInstance<P>>,
     _marker: PhantomData<P>,
 }
 
 impl<P: Project> NewInstanceSender<P> for EmbeddedNewInstanceSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
-    async fn send(&self, step: WorkflowInstance) -> Result<(), Self::Error> {
+    async fn send(&self, step: WorkflowInstance<P>) -> Result<(), Self::Error> {
         self.sender
             .send(step)
             .await
@@ -122,7 +122,7 @@ impl<P: Project> NewInstanceSender<P> for EmbeddedNewInstanceSender<P> {
 }
 
 impl<P: Project> EmbeddedNewInstanceSender<P> {
-    pub fn new(sender: Sender<WorkflowInstance>) -> Self {
+    pub fn new(sender: Sender<WorkflowInstance<P>>) -> Self {
         Self {
             sender,
             _marker: PhantomData,
@@ -136,14 +136,14 @@ impl<P: Project> EmbeddedNewInstanceSender<P> {
 
 #[derive(Debug, Clone)]
 pub struct EmbeddedFailedInstanceSender<P: Project> {
-    sender: Sender<WorkflowInstance>,
+    sender: Sender<WorkflowInstance<P>>,
     _marker: PhantomData<P>,
 }
 
 impl<P: Project> FailedInstanceSender<P> for EmbeddedFailedInstanceSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
-    async fn send(&self, step: WorkflowInstance) -> Result<(), Self::Error> {
+    async fn send(&self, step: WorkflowInstance<P>) -> Result<(), Self::Error> {
         self.sender
             .send(step)
             .await
@@ -154,7 +154,7 @@ impl<P: Project> FailedInstanceSender<P> for EmbeddedFailedInstanceSender<P> {
 }
 
 impl<P: Project> EmbeddedFailedInstanceSender<P> {
-    pub fn new(sender: Sender<WorkflowInstance>) -> Self {
+    pub fn new(sender: Sender<WorkflowInstance<P>>) -> Self {
         Self {
             sender,
             _marker: PhantomData,
@@ -168,14 +168,14 @@ impl<P: Project> EmbeddedFailedInstanceSender<P> {
 
 #[derive(Debug, Clone)]
 pub struct EmbeddedCompletedInstanceSender<P: Project> {
-    sender: Sender<WorkflowInstance>,
+    sender: Sender<WorkflowInstance<P>>,
     _marker: PhantomData<P>,
 }
 
 impl<P: Project> CompletedInstanceSender<P> for EmbeddedCompletedInstanceSender<P> {
     type Error = EmbeddedAdapterError<P>;
 
-    async fn send(&self, step: WorkflowInstance) -> Result<(), Self::Error> {
+    async fn send(&self, step: WorkflowInstance<P>) -> Result<(), Self::Error> {
         self.sender
             .send(step)
             .await
@@ -186,7 +186,7 @@ impl<P: Project> CompletedInstanceSender<P> for EmbeddedCompletedInstanceSender<
 }
 
 impl<P: Project> EmbeddedCompletedInstanceSender<P> {
-    pub fn new(sender: Sender<WorkflowInstance>) -> Self {
+    pub fn new(sender: Sender<WorkflowInstance<P>>) -> Self {
         Self {
             sender,
             _marker: PhantomData,

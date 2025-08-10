@@ -16,7 +16,7 @@ pub enum EmbeddedAdapterError<P: Project> {
     #[error("failed to send instance event")]
     SendInstanceEventError(#[from] SendError<InstanceEvent<P>>),
     #[error("failed to send workflow instance")]
-    SendWorkflowInstanceEventError(#[from] SendError<WorkflowInstance>),
+    SendWorkflowInstanceEventError(#[from] SendError<WorkflowInstance<P>>),
     #[error("Failed to deserialize step")]
     DeserializeError(#[source] serde_json::Error),
     #[error("Failed to serialize step")]
@@ -24,5 +24,8 @@ pub enum EmbeddedAdapterError<P: Project> {
     #[error("SQLx error")]
     SqlxError(#[from] sqlx::Error),
 }
+
+// unsafe impl<P: Project> Send for EmbeddedAdapterError<P> {}
+// unsafe impl<P: Project> Sync for EmbeddedAdapterError<P> {}
 
 pub static MIGRATOR: Migrator = sqlx::migrate!();
