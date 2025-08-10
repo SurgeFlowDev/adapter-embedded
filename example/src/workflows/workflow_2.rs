@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
     __Event, __Step, __Workflow, Immediate, Project, StepWithSettings, TryAsRef, TryFromRef,
-    next_step,
+    Workflow, next_step,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -54,13 +54,9 @@ impl __Workflow<MyProject> for ProjectWorkflow {
         }
     }
 
-    fn name() -> &'static str {
-        todo!()
-    }
-
-    fn project_workflow(&self) -> <MyProject as Project>::Workflow {
+    fn name(&self) -> &'static str {
         match self {
-            ProjectWorkflow::Workflow1(my_workflow) => my_workflow.project_workflow(),
+            ProjectWorkflow::Workflow1(my_workflow) => my_workflow.name(),
         }
     }
 }
@@ -162,20 +158,13 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 struct MyWorkflow;
 
-impl __Workflow<MyProject> for MyWorkflow {
+impl Workflow<MyProject> for MyWorkflow {
+    const NAME: &'static str = "MyWorkflow";
     type Step = MyWorkflowStep;
 
-    fn entrypoint(&self) -> StepWithSettings<MyProject> {
-        let step = Self::Step::from(MyWorkflowStep::Step0(MyStep));
+    fn entrypoint() -> StepWithSettings<MyProject> {
+        let step = <Self as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step0(MyStep));
         next_step(step).max_retries(0).call()
-    }
-
-    fn name() -> &'static str {
-        "MyWorkflow"
-    }
-
-    fn project_workflow(&self) -> <MyProject as Project>::Workflow {
-        todo!()
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
