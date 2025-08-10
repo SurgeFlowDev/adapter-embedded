@@ -51,7 +51,7 @@ mod persistence_manager {
     use sqlx::{SqlitePool, query};
 
     use adapter_types::managers::PersistenceManager;
-    use surgeflow_types::{Project, StepId, WorkflowInstance, WorkflowInstanceId};
+    use surgeflow_types::{Project, StepId, WorkflowInstance, WorkflowInstanceId, __Workflow};
 
     use crate::EmbeddedAdapterError;
 
@@ -86,7 +86,7 @@ mod persistence_manager {
             &self,
             workflow_instance_id: WorkflowInstanceId,
             step_id: StepId,
-            step: &P::Step,
+            step: &<P::Workflow as __Workflow<P>>::Step,
         ) -> Result<(), Self::Error> {
             let json_step =
                 serde_json::to_value(step).map_err(EmbeddedAdapterError::SerializeError)?;
@@ -110,7 +110,7 @@ mod persistence_manager {
         async fn insert_step_output(
             &self,
             step_id: StepId,
-            output: Option<&P::Step>,
+            output: Option<&<P::Workflow as __Workflow<P>>::Step>,
         ) -> Result<(), EmbeddedAdapterError<P>> {
             let output = serde_json::to_value(output).expect("TODO: handle serialization error");
             let step_id = step_id.to_string();
