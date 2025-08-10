@@ -2,8 +2,8 @@ use derive_more::{From, TryInto};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
-    __Event, __Step, __Workflow, Immediate, Project, StepWithSettings, TryAsRef, TryFromRef,
-    Workflow, next_step,
+    __Event, __Step, __Workflow, EntrypointExt, Immediate, Project, StepWithSettings, TryAsRef,
+    TryFromRef, Workflow, next_step,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -27,6 +27,7 @@ struct MyProject;
 
 impl Project for MyProject {
     type Workflow = ProjectWorkflow;
+    type ShallowWorkflow = ProjectShallowWorkflow;
 
     fn workflow_for_step(
         &self,
@@ -35,9 +36,9 @@ impl Project for MyProject {
         todo!()
     }
 
-    fn workflow<T: __Workflow<Self>>() -> Self::Workflow {
-        todo!()
-    }
+    // fn workflow<T: __Workflow<Self>>() -> Self::Workflow {
+    //     todo!()
+    // }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
@@ -45,18 +46,30 @@ enum ProjectWorkflow {
     Workflow1(MyWorkflow),
 }
 
-impl __Workflow<MyProject> for ProjectWorkflow {
-    type Step = MyProjectWorkflowStep;
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
+enum ProjectShallowWorkflow {
+    Workflow1,
+}
 
+impl EntrypointExt<MyProject> for ProjectShallowWorkflow {
     fn entrypoint(&self) -> StepWithSettings<MyProject> {
         match self {
-            ProjectWorkflow::Workflow1(my_workflow) => my_workflow.entrypoint(),
+            ProjectShallowWorkflow::Workflow1 => <MyWorkflow as Workflow<MyProject>>::entrypoint(),
         }
     }
+}
+
+impl __Workflow<MyProject> for ProjectWorkflow {
+    type Step = MyProjectWorkflowStep;
 
     fn name(&self) -> &'static str {
         match self {
             ProjectWorkflow::Workflow1(my_workflow) => my_workflow.name(),
+        }
+    }
+    fn shallow_workflow(&self) -> <MyProject as Project>::ShallowWorkflow {
+        match self {
+            ProjectWorkflow::Workflow1(workflow) => workflow.shallow_workflow(),
         }
     }
 }
@@ -64,7 +77,6 @@ impl __Workflow<MyProject> for ProjectWorkflow {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
 enum MyProjectWorkflowStep {
     Workflow1(<MyWorkflow as __Workflow<MyProject>>::Step),
-    // Immediate(Immediate),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
@@ -79,7 +91,7 @@ impl TryFromRef<MyProjectWorkflowStepEvent> for Immediate {
 
     fn try_from_ref(value: &MyProjectWorkflowStepEvent) -> Result<&Self, Self::Error> {
         match value {
-            MyProjectWorkflowStepEvent::Workflow1(event) => Ok(event.try_as_ref().expect("TODO")),
+            MyProjectWorkflowStepEvent::Workflow1(event) => Ok(event.try_as_ref()?),
             MyProjectWorkflowStepEvent::Immediate(immediate) => Ok(immediate),
         }
     }
@@ -136,7 +148,12 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
         match self {
             MyProjectWorkflowStep::Workflow1(workflow) => {
                 workflow
-                    .run(wf.try_into().unwrap(), event.try_into().unwrap())
+                    .run(
+                        // TODO
+                        wf.try_into().map_err(|err| TempError)?,
+                        // TODO
+                        event.try_into().map_err(|err| TempError)?,
+                    )
                     .await
             }
         }
@@ -160,6 +177,8 @@ struct MyWorkflow;
 
 impl Workflow<MyProject> for MyWorkflow {
     const NAME: &'static str = "MyWorkflow";
+    const SHALLOW_WORKFLOW: <MyProject as Project>::ShallowWorkflow =
+        ProjectShallowWorkflow::Workflow1;
     type Step = MyWorkflowStep;
 
     fn entrypoint() -> StepWithSettings<MyProject> {
