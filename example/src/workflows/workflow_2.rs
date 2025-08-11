@@ -288,7 +288,7 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
         Option<RawStep<MyProject, <MyProject as Project>::Workflow>>,
         <Self as __Step<MyProject, MyWorkflow>>::Error,
     > {
-        let res = <Self as Step<MyProject, MyWorkflow>>::run(self, wf, event).await?;
+        let res = Step::run(self, wf, event).await?;
         let Some(res) = res else {
             return Ok(None);
         };
@@ -324,12 +324,7 @@ impl Step<MyProject, MyWorkflow> for MyStep {
         tracing::info!("Running MyStep with event: {:?}", event);
         let step =
             <MyWorkflow as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step2(MyAnotherStep));
-        Ok(Some(
-            next_step(step)
-                .max_retries(0)
-                .event(Immediate)
-                .call(),
-        ))
+        Ok(Some(next_step(step).max_retries(0).event(Immediate).call()))
     }
 }
 
