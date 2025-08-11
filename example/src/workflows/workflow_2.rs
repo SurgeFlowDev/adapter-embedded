@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
     __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Immediate, Project,
-    ProjectWorkflowControl, StepWithSettings, TryAsRef, TryFromRef, Workflow, WorkflowControl,
+    ProjectWorkflowControl, StepWithSettings, Workflow, WorkflowControl,
     next_step,
     senders::{EventSender, NewInstanceSender},
 };
@@ -83,58 +83,29 @@ pub enum MyProjectWorkflowStep {
     Workflow1(<MyWorkflow as __Workflow<MyProject>>::Step),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From)]
 pub enum MyProjectWorkflowStepEvent {
     Workflow1(
         <<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event,
     ),
     Immediate(Immediate),
 }
-impl TryFromRef<MyProjectWorkflowStepEvent> for Immediate {
-    type Error = TempError;
-
-    fn try_from_ref(value: &MyProjectWorkflowStepEvent) -> Result<&Self, Self::Error> {
-        match value {
-            MyProjectWorkflowStepEvent::Workflow1(event) => Ok(event.try_as_ref()?),
-            MyProjectWorkflowStepEvent::Immediate(immediate) => Ok(immediate),
-        }
-    }
-}
-
-impl TryFromRef<MyProjectWorkflowStepEvent>
+impl TryFrom<MyProjectWorkflowStepEvent>
     for <<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event
 {
     type Error = TempError;
 
-    fn try_from_ref(value: &MyProjectWorkflowStepEvent) -> Result<&Self, Self::Error> {
+    fn try_from(value: MyProjectWorkflowStepEvent) -> Result<Self, Self::Error> {
         match value {
-            MyProjectWorkflowStepEvent::Workflow1(event) => Ok(event),
-            MyProjectWorkflowStepEvent::Immediate(immediate) => Err(TempError),
+            MyProjectWorkflowStepEvent::Workflow1(event) => Ok(event.into()),
+            MyProjectWorkflowStepEvent::Immediate(immediate) => Ok(immediate.into()),
         }
     }
 }
 
-impl __Event<MyProject, ProjectWorkflow> for MyProjectWorkflowStepEvent {
-    fn value_is<WInner: __Workflow<MyProject>, T: __Event<MyProject, WInner> + 'static>(
-        &self,
-    ) -> bool {
-        match self {
-            MyProjectWorkflowStepEvent::Workflow1(event) => event.value_is::<WInner, T>(),
-            MyProjectWorkflowStepEvent::Immediate(immediate) => {
-                <Immediate as __Event<MyProject, WInner>>::value_is::<WInner, T>(immediate)
-            }
-        }
-    }
-}
+impl __Event<MyProject, ProjectWorkflow> for MyProjectWorkflowStepEvent {}
 
-// TODO: create a "FromRef" trait that auto implements this?
-impl TryFromRef<MyProjectWorkflowStepEvent> for MyProjectWorkflowStepEvent {
-    type Error = TempError;
 
-    fn try_from_ref(value: &MyProjectWorkflowStepEvent) -> Result<&Self, Self::Error> {
-        Ok(value)
-    }
-}
 
 impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
     type Event = MyProjectWorkflowStepEvent;
@@ -149,29 +120,37 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
         Option<StepWithSettings<MyProject>>,
         <Self as __Step<MyProject, ProjectWorkflow>>::Error,
     > {
+        tracing::info!("Running MyProjectWorkflowStep with event: {:?}", event);
         match self {
             MyProjectWorkflowStep::Workflow1(workflow) => {
                 workflow
                     .run(
                         // TODO
-                        wf.try_into().map_err(|err| TempError)?,
+                        wf.try_into().map_err(|err| {
+                            tracing::error!("Failed to convert workflow: {:?}", err);
+                            TempError
+                        })?,
                         // TODO
-                        event.try_into().map_err(|err| TempError)?,
+                        event.try_into().map_err(|err| {
+                            tracing::error!("Failed to convert event: {:?}", err);
+                            TempError
+                        })?,
                     )
                     .await
             }
         }
     }
 
-    fn value_has_event_value(&self, e: &Self::Event) -> bool {
-        match self {
-            MyProjectWorkflowStep::Workflow1(workflow) => {
-                let event = match e.try_as_ref() {
-                    Ok(event) => event,
-                    Err(_) => return false,
-                };
-                workflow.value_has_event_value(event)
-            }
+    fn event_is_event(&self, event: &Self::Event) -> bool {
+        match (self, event) {
+            (
+                MyProjectWorkflowStep::Workflow1(workflow),
+                MyProjectWorkflowStepEvent::Workflow1(event),
+            ) => workflow.event_is_event(event),
+            (
+                MyProjectWorkflowStep::Workflow1(workflow),
+                MyProjectWorkflowStepEvent::Immediate(immediate),
+            ) => workflow.event_is_event(&MyWorkflowStepEvent::Immediate(*immediate)),
         }
     }
 }
@@ -202,35 +181,9 @@ pub enum MyWorkflowStep {
 pub enum MyWorkflowStepEvent {
     Immediate(Immediate),
 }
-impl TryFromRef<MyWorkflowStepEvent> for Immediate {
-    type Error = TempError;
 
-    fn try_from_ref(value: &MyWorkflowStepEvent) -> Result<&Self, Self::Error> {
-        match value {
-            MyWorkflowStepEvent::Immediate(immediate) => Ok(immediate),
-        }
-    }
-}
 
-impl TryFromRef<MyWorkflowStepEvent> for MyWorkflowStepEvent {
-    type Error = TempError;
-
-    fn try_from_ref(value: &MyWorkflowStepEvent) -> Result<&Self, Self::Error> {
-        Ok(value)
-    }
-}
-
-impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {
-    fn value_is<WInner: __Workflow<MyProject>, T: __Event<MyProject, WInner> + 'static>(
-        &self,
-    ) -> bool {
-        match self {
-            MyWorkflowStepEvent::Immediate(immediate) => {
-                <_ as __Event<_, WInner>>::value_is::<_, T>(immediate)
-            }
-        }
-    }
-}
+impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {}
 
 impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
     type Event = MyWorkflowStepEvent;
@@ -243,6 +196,7 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
         event: Self::Event,
     ) -> Result<Option<StepWithSettings<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error>
     {
+        tracing::info!("Running MyWorkflowStep with event: {:?}", event);
         match self {
             MyWorkflowStep::Step0(step) => {
                 let event = match event.try_into() {
@@ -254,14 +208,10 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
         }
     }
 
-    fn value_has_event_value(&self, e: &Self::Event) -> bool {
-        match self {
-            MyWorkflowStep::Step0(step) => {
-                let event = match e.try_as_ref() {
-                    Ok(event) => event,
-                    Err(_) => return false,
-                };
-                step.value_has_event_value(event)
+    fn event_is_event(&self, event: &Self::Event) -> bool {
+        match (self, event) {
+            (MyWorkflowStep::Step0(step), MyWorkflowStepEvent::Immediate(event)) => {
+                step.event_is_event(event)
             }
         }
     }
@@ -285,8 +235,10 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
         Ok(None)
     }
 
-    fn value_has_event_value(&self, e: &Self::Event) -> bool {
-        <Self::Event as __Event<MyProject, MyWorkflow>>::value_is::<MyWorkflow, Self::Event>(e)
+    fn event_is_event(&self, event: &Self::Event) -> bool {
+        match event {
+            Immediate => true,
+        }
     }
 }
 
