@@ -3,8 +3,9 @@ use derive_more::{From, TryInto};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
-    __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Immediate, Project,
-    ProjectWorkflowControl, StepWithSettings, Workflow, WorkflowControl, next_step,
+    __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Event, Immediate, Project,
+    ProjectWorkflowControl, StepWithSettings, TryAsRef, TryFromRef, Workflow, WorkflowControl,
+    next_step,
     senders::{EventSender, NewInstanceSender},
 };
 
@@ -102,6 +103,15 @@ impl TryFrom<MyProjectWorkflowStepEvent>
     }
 }
 
+// identity conversion
+impl TryFromRef<MyProjectWorkflowStepEvent> for MyProjectWorkflowStepEvent {
+    type Error = TempError;
+
+    fn try_from_ref(value: &MyProjectWorkflowStepEvent) -> Result<&Self, Self::Error> {
+        Ok(value)
+    }
+}
+
 impl __Event<MyProject, ProjectWorkflow> for MyProjectWorkflowStepEvent {}
 
 impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
@@ -141,13 +151,15 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
     fn event_is_event(&self, event: &Self::Event) -> bool {
         match (self, event) {
             (
-                MyProjectWorkflowStep::Workflow1(workflow),
+                MyProjectWorkflowStep::Workflow1(step),
                 MyProjectWorkflowStepEvent::Workflow1(event),
-            ) => workflow.event_is_event(event),
+            ) => step.event_is_event(event),
             (
-                MyProjectWorkflowStep::Workflow1(workflow),
-                MyProjectWorkflowStepEvent::Immediate(immediate),
-            ) => workflow.event_is_event(&MyWorkflowStepEvent::Immediate(*immediate)),
+                // for multiple workflows
+                // MyProjectWorkflowStep::Workflow1(step) |
+                MyProjectWorkflowStep::Workflow1(step),
+                MyProjectWorkflowStepEvent::Immediate(event),
+            ) => step.event_is_event(&(*event).into()),
         }
     }
 }
@@ -165,21 +177,33 @@ impl Workflow<MyProject> for MyWorkflow {
     const WORKFLOW_STATIC: <Self as __Workflow<MyProject>>::WorkflowStatic = MyWorkflowStatic;
 
     fn entrypoint() -> StepWithSettings<MyProject> {
-        let step = <Self as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step0(MyStep));
+        let step = <Self as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step1(MyStep));
         next_step(step).max_retries(0).call()
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
 pub enum MyWorkflowStep {
-    Step0(MyStep),
+    Step1(MyStep),
+    Step2(MyAnotherStep),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
 pub enum MyWorkflowStepEvent {
+    MyEvent(MyEvent),
+    #[serde(skip)]
     Immediate(Immediate),
 }
 
 impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {}
+
+// identity conversion
+impl TryFromRef<MyWorkflowStepEvent> for MyWorkflowStepEvent {
+    type Error = TempError;
+
+    fn try_from_ref(value: &MyWorkflowStepEvent) -> Result<&Self, Self::Error> {
+        Ok(value)
+    }
+}
 
 impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
     type Event = MyWorkflowStepEvent;
@@ -194,7 +218,14 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
     {
         tracing::info!("Running MyWorkflowStep with event: {:?}", event);
         match self {
-            MyWorkflowStep::Step0(step) => {
+            MyWorkflowStep::Step1(step) => {
+                let event = match event.try_into() {
+                    Ok(event) => event,
+                    Err(_) => return Err(TempError),
+                };
+                step.run(wf, event).await
+            }
+            MyWorkflowStep::Step2(step) => {
                 let event = match event.try_into() {
                     Ok(event) => event,
                     Err(_) => return Err(TempError),
@@ -205,10 +236,26 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
     }
 
     fn event_is_event(&self, event: &Self::Event) -> bool {
-        match (self, event) {
-            (MyWorkflowStep::Step0(step), MyWorkflowStepEvent::Immediate(event)) => {
-                step.event_is_event(event)
-            }
+        match self {
+            MyWorkflowStep::Step1(step) => match event.try_as_ref() {
+                Ok(event) => step.event_is_event(event),
+                Err(_) => false,
+            },
+            MyWorkflowStep::Step2(step) => match event.try_as_ref() {
+                Ok(event) => step.event_is_event(event),
+                Err(_) => false,
+            },
+        }
+    }
+}
+
+impl TryFromRef<MyWorkflowStepEvent> for MyEvent {
+    type Error = TempError;
+
+    fn try_from_ref(value: &MyWorkflowStepEvent) -> Result<&Self, Self::Error> {
+        match value {
+            MyWorkflowStepEvent::MyEvent(event) => Ok(event),
+            _ => Err(TempError),
         }
     }
 }
@@ -217,6 +264,51 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
 pub struct MyStep;
 
 impl __Step<MyProject, MyWorkflow> for MyStep {
+    type Event = MyEvent;
+
+    type Error = TempError;
+
+    async fn run(
+        &self,
+        wf: MyWorkflow,
+        event: Self::Event,
+    ) -> Result<Option<StepWithSettings<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error>
+    {
+        tracing::info!("Running MyStep with event: {:?}", event);
+        let step =
+            <MyWorkflow as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step2(MyAnotherStep));
+        Ok(Some(next_step(step).max_retries(0).call()))
+    }
+
+    fn event_is_event(&self, _: &Self::Event) -> bool {
+        // this check, on the bare step is always true since we're only comparing the type
+        // TODO: we could allow custom logic here, or use PartialEq, to allow the user to make value-based comparisons
+        true
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct MyEvent {
+    data: String,
+}
+
+impl Event<MyProject, MyWorkflow> for MyEvent {}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct MyAnotherStep;
+
+impl TryFromRef<MyWorkflowStepEvent> for Immediate {
+    type Error = TempError;
+
+    fn try_from_ref(value: &MyWorkflowStepEvent) -> Result<&Self, Self::Error> {
+        match value {
+            MyWorkflowStepEvent::Immediate(immediate) => Ok(immediate),
+            _ => Err(TempError),
+        }
+    }
+}
+
+impl __Step<MyProject, MyWorkflow> for MyAnotherStep {
     type Event = Immediate;
 
     type Error = TempError;

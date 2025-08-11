@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "adapter-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6914f1f25e9f585bc044d3fdd0ed01c47106223e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#d679130fe97ba7fe898d9f03839ebb64e3621cea"
 dependencies = [
  "surgeflow-types",
 ]
@@ -413,7 +413,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "control-server"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6914f1f25e9f585bc044d3fdd0ed01c47106223e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#d679130fe97ba7fe898d9f03839ebb64e3621cea"
 dependencies = [
  "adapter-types",
  "aide",
@@ -1248,7 +1248,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 [[package]]
 name = "macros"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6914f1f25e9f585bc044d3fdd0ed01c47106223e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#d679130fe97ba7fe898d9f03839ebb64e3621cea"
 dependencies = [
  "darling 0.20.11",
  "proc-macro-crate",
@@ -2165,7 +2165,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "surgeflow"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6914f1f25e9f585bc044d3fdd0ed01c47106223e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#d679130fe97ba7fe898d9f03839ebb64e3621cea"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2185,7 +2185,7 @@ dependencies = [
 [[package]]
 name = "surgeflow-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6914f1f25e9f585bc044d3fdd0ed01c47106223e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#d679130fe97ba7fe898d9f03839ebb64e3621cea"
 dependencies = [
  "bon",
  "derive_more",
