@@ -5,7 +5,7 @@ use surgeflow::{
     ConvertingProjectEventToWorkflowEventError, ConvertingProjectStepToWorkflowStepError,
     ConvertingWorkflowEventToEventError, ConvertingWorkflowStepToStepError, Event, Immediate,
     Project, ProjectStep, Step, StepResult, SurgeflowWorkflowStepError, TryFromRef, Workflow,
-    WorkflowEvent, WorkflowStep, WorkflowStepWithSettings, next_step, workflow,
+    WorkflowEvent, WorkflowStep, WorkflowRawStep, next_step, workflow,
 };
 
 use crate::workflows::{MyProject, MyProjectEvent};
@@ -22,7 +22,7 @@ impl Workflow for Workflow1 {
     type Event = event!(Event0);
     const NAME: &'static str = "workflow_1";
 
-    fn entrypoint() -> WorkflowStepWithSettings<Self> {
+    fn entrypoint() -> WorkflowRawStep<Self> {
         next_step(Step0).max_retries(3).call()
     }
 }
@@ -66,7 +66,7 @@ impl WorkflowStep for Workflow1Step {
         wf: Self::Workflow,
         event: <Self::Workflow as Workflow>::Event,
     ) -> Result<
-        Option<WorkflowStepWithSettings<Self::Workflow>>,
+        Option<WorkflowRawStep<Self::Workflow>>,
         SurgeflowWorkflowStepError<<Self as WorkflowStep>::Error>,
     > {
         let res = match self {
@@ -109,7 +109,7 @@ impl Step for Workflow1Step {
         &self,
         wf: Self::Workflow,
         event: Self::Event,
-    ) -> Result<Option<WorkflowStepWithSettings<Self::Workflow>>, <Self as Step>::Error> {
+    ) -> Result<Option<WorkflowRawStep<Self::Workflow>>, <Self as Step>::Error> {
         match self {
             Workflow1Step::A(step) => step
                 .run(wf, event.try_into().unwrap())
@@ -165,7 +165,7 @@ impl Step for Step1 {
         &self,
         wf: Self::Workflow,
         event: Self::Event,
-    ) -> Result<Option<WorkflowStepWithSettings<Self::Workflow>>, <Self as Step>::Error> {
+    ) -> Result<Option<WorkflowRawStep<Self::Workflow>>, <Self as Step>::Error> {
         tracing::info!("Running Step1 in Workflow1");
         Ok(None)
     }

@@ -4,8 +4,8 @@
 // //     type Event = event!(Event0, ...);
 // //     type Step = step!(Step0, Step1);
 // //
-// //     fn entrypoint() -> WorkflowStepWithSettings<Self> {
-// //         WorkflowStepWithSettings {
+// //     fn entrypoint() -> WorkflowRawStep<Self> {
+// //         WorkflowRawStep {
 // //             step: Workflow1Step::Step0(Step0),
 // //             settings: StepSettings { max_retries: 3 },
 // //         }
@@ -17,7 +17,7 @@
 // use serde::{Deserialize, Serialize};
 // use std::fmt::Debug;
 // use surgeflow::senders::{EventSender, NewInstanceSender};
-// use surgeflow::{ArcAppState, ProjectWorkflowControl, Step, StepWithSettings, WorkflowControl, __Step};
+// use surgeflow::{ArcAppState, ProjectWorkflowControl, Step, RawStep, WorkflowControl, __Step};
 // use surgeflow::{
 //     ConvertingProjectStepToWorkflowStepError, ConvertingProjectWorkflowToWorkflowError, Event,
 //     Immediate, Project, SurgeflowProjectStepError, TryAsRef, Workflow, WorkflowName,
@@ -131,7 +131,7 @@ pub mod workflow_2;
 //     type Project = MyProject;
 
 //     // TODO: this should be based on some sort of enum, not a WorkflowName
-//     fn entrypoint(workflow_name: WorkflowName) -> ProjectStepWithSettings<Self::Project> {
+//     fn entrypoint(workflow_name: WorkflowName) -> ProjectRawStep<Self::Project> {
 //         // if workflow_name == Workflow1::NAME.into() {
 //         //     Workflow1::entrypoint().into()
 //         // } else
@@ -220,7 +220,7 @@ pub mod workflow_2;
 // impl __Step<MyProject, MyProjectWorkflow> for MyProjectStep {
 //     type Error = MyProjectStepError;
 //     type Event = MyProjectEvent;
-//     type RunFuture = Box<dyn Future<Output = Result<Option<StepWithSettings<Self::Project>>, SurgeflowProjectStepError<Self::Error>>> + Send>;
+//     type RunFuture = Box<dyn Future<Output = Result<Option<RawStep<Self::Project>>, SurgeflowProjectStepError<Self::Error>>> + Send>;
 
 //     // fn is_event<T: Event + 'static>(&self) -> bool {
 //     //     match self {
@@ -245,7 +245,7 @@ pub mod workflow_2;
 //         wf: <Self::Project as Project>::Workflow,
 //         event: <Self::Project as Project>::Event,
 //     ) -> Result<
-//         Option<StepWithSettings<Self::Project>>,
+//         Option<RawStep<Self::Project>>,
 //         SurgeflowProjectStepError<Self::Error>,
 //     > {
 //         match self {

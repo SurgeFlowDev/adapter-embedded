@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
     __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Event, Immediate, Project,
-    ProjectWorkflowControl, StepWithSettings, TryAsRef, TryFromRef, Workflow, WorkflowControl,
-    next_step,
+    ProjectWorkflowControl, RawStep, TryAsRef, TryFromRef, Workflow, WorkflowControl, next_step,
     senders::{EventSender, NewInstanceSender},
 };
 
@@ -56,7 +55,7 @@ pub enum ProjectWorkflowStatic {
 }
 
 impl __WorkflowStatic<MyProject, <MyProject as Project>::Workflow> for ProjectWorkflowStatic {
-    fn entrypoint(&self) -> StepWithSettings<MyProject> {
+    fn entrypoint(&self) -> RawStep<MyProject> {
         match self {
             ProjectWorkflowStatic::Workflow1(w) => {
                 <MyWorkflowStatic as __WorkflowStatic<MyProject, MyWorkflow>>::entrypoint(w)
@@ -83,13 +82,23 @@ pub enum MyProjectWorkflowStep {
     Workflow1(<MyWorkflow as __Workflow<MyProject>>::Step),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum MyProjectWorkflowStepEvent {
     Workflow1(
         <<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event,
     ),
     Immediate(Immediate),
 }
+impl From<<<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event>
+    for MyProjectWorkflowStepEvent
+{
+    fn from(
+        event: <<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event,
+    ) -> Self {
+        MyProjectWorkflowStepEvent::Workflow1(event)
+    }
+}
+
 impl TryFrom<MyProjectWorkflowStepEvent>
     for <<MyWorkflow as __Workflow<MyProject>>::Step as __Step<MyProject, MyWorkflow>>::Event
 {
@@ -123,10 +132,8 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
         &self,
         wf: ProjectWorkflow,
         event: Self::Event,
-    ) -> Result<
-        Option<StepWithSettings<MyProject>>,
-        <Self as __Step<MyProject, ProjectWorkflow>>::Error,
-    > {
+    ) -> Result<Option<RawStep<MyProject>>, <Self as __Step<MyProject, ProjectWorkflow>>::Error>
+    {
         tracing::info!("Running MyProjectWorkflowStep with event: {:?}", event);
         match self {
             MyProjectWorkflowStep::Workflow1(workflow) => {
@@ -176,7 +183,7 @@ impl Workflow<MyProject> for MyWorkflow {
     type WorkflowStatic = MyWorkflowStatic;
     const WORKFLOW_STATIC: <Self as __Workflow<MyProject>>::WorkflowStatic = MyWorkflowStatic;
 
-    fn entrypoint() -> StepWithSettings<MyProject> {
+    fn entrypoint() -> RawStep<MyProject> {
         let step = <Self as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step1(MyStep));
         next_step(step).max_retries(0).call()
     }
@@ -214,8 +221,7 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
         &self,
         wf: MyWorkflow,
         event: Self::Event,
-    ) -> Result<Option<StepWithSettings<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error>
-    {
+    ) -> Result<Option<RawStep<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error> {
         tracing::info!("Running MyWorkflowStep with event: {:?}", event);
         match self {
             MyWorkflowStep::Step1(step) => {
@@ -272,12 +278,16 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
         &self,
         wf: MyWorkflow,
         event: Self::Event,
-    ) -> Result<Option<StepWithSettings<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error>
-    {
+    ) -> Result<Option<RawStep<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error> {
         tracing::info!("Running MyStep with event: {:?}", event);
         let step =
             <MyWorkflow as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step2(MyAnotherStep));
-        Ok(Some(next_step(step).max_retries(0).call()))
+        Ok(Some(
+            next_step(step)
+                .max_retries(0)
+                .event(MyWorkflowStepEvent::from(Immediate).into())
+                .call(),
+        ))
     }
 
     fn event_is_event(&self, _: &Self::Event) -> bool {
@@ -317,8 +327,7 @@ impl __Step<MyProject, MyWorkflow> for MyAnotherStep {
         &self,
         wf: MyWorkflow,
         event: Self::Event,
-    ) -> Result<Option<StepWithSettings<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error>
-    {
+    ) -> Result<Option<RawStep<MyProject>>, <Self as __Step<MyProject, MyWorkflow>>::Error> {
         tracing::info!("Running MyStep with event: {:?}", event);
         Ok(None)
     }
