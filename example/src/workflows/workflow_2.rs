@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
     __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Immediate, Project,
-    ProjectWorkflowControl, StepWithSettings, Workflow, WorkflowControl,
-    next_step,
+    ProjectWorkflowControl, StepWithSettings, Workflow, WorkflowControl, next_step,
     senders::{EventSender, NewInstanceSender},
 };
 
@@ -105,8 +104,6 @@ impl TryFrom<MyProjectWorkflowStepEvent>
 
 impl __Event<MyProject, ProjectWorkflow> for MyProjectWorkflowStepEvent {}
 
-
-
 impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
     type Event = MyProjectWorkflowStepEvent;
 
@@ -182,7 +179,6 @@ pub enum MyWorkflowStepEvent {
     Immediate(Immediate),
 }
 
-
 impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {}
 
 impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
@@ -235,7 +231,7 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
         Ok(None)
     }
 
-    fn event_is_event(&self, event: &Self::Event) -> bool {
+    fn event_is_event(&self, _: &Self::Event) -> bool {
         // this check, on the bare step is always true since we're only comparing the type
         // TODO: we could allow custom logic here, or use PartialEq, to allow the user to make value-based comparisons
         true
