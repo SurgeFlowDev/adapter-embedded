@@ -210,8 +210,8 @@ impl<P: Project> EmbeddedDependencyManager<P> {
 
     async fn sqlx_pool(&mut self) -> &SqlitePool {
         &self.sqlx_pool
-        }
     }
+}
 
 impl<P: Project> CompletedInstanceWorkerDependencyProvider<P> for EmbeddedDependencyManager<P> {
     type CompletedInstanceReceiver = EmbeddedCompletedInstanceReceiver<P>;

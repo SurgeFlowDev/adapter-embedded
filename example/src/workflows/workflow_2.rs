@@ -58,13 +58,17 @@ pub enum ProjectWorkflowStatic {
 impl __WorkflowStatic<MyProject, <MyProject as Project>::Workflow> for ProjectWorkflowStatic {
     fn entrypoint(&self) -> StepWithSettings<MyProject> {
         match self {
-            ProjectWorkflowStatic::Workflow1(w) => <MyWorkflowStatic as __WorkflowStatic<MyProject, MyWorkflow>>::entrypoint(w),
+            ProjectWorkflowStatic::Workflow1(w) => {
+                <MyWorkflowStatic as __WorkflowStatic<MyProject, MyWorkflow>>::entrypoint(w)
+            }
         }
     }
 
     fn name(&self) -> &'static str {
         match self {
-            ProjectWorkflowStatic::Workflow1(w) => <MyWorkflowStatic as __WorkflowStatic<MyProject, MyWorkflow>>::name(w),
+            ProjectWorkflowStatic::Workflow1(w) => {
+                <MyWorkflowStatic as __WorkflowStatic<MyProject, MyWorkflow>>::name(w)
+            }
         }
     }
 }
@@ -177,7 +181,6 @@ pub struct MyWorkflow;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MyWorkflowStatic;
-
 
 impl Workflow<MyProject> for MyWorkflow {
     const NAME: &'static str = "MyWorkflow";
