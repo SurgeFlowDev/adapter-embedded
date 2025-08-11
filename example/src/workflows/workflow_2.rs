@@ -288,19 +288,18 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
         Option<RawStep<MyProject, <MyProject as Project>::Workflow>>,
         <Self as __Step<MyProject, MyWorkflow>>::Error,
     > {
-        let res = Step::run(self, wf, event).await?;
-        let Some(res) = res else {
-            return Ok(None);
-        };
-
-        // TODO: there should be some custom Into<> trait
-        // I can't use `Into::into` because of the identity implementation in the core library
-        // it conflicts with the generic implementation
-        Ok(Some(RawStep {
-            step: res.step.into(),
-            event: res.event.map(Into::into),
-            settings: res.settings,
-        }))
+        Step::run(self, wf, event).await.map(|step| {
+            step.map(|step| {
+                // TODO: there should be some custom Into<> trait
+                // I can't use `Into::into` because of the identity implementation in the core library
+                // it conflicts with the generic implementation
+                RawStep::<MyProject, <MyProject as Project>::Workflow> {
+                    step: step.step.into(),
+                    event: step.event.map(Into::into),
+                    settings: step.settings,
+                }
+            })
+        })
     }
 
     fn event_is_event(&self, ev: &Self::Event) -> bool {
