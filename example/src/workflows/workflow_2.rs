@@ -236,9 +236,9 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
     }
 
     fn event_is_event(&self, event: &Self::Event) -> bool {
-        match event {
-            Immediate => true,
-        }
+        // this check, on the bare step is always true since we're only comparing the type
+        // TODO: we could allow custom logic here, or use PartialEq, to allow the user to make value-based comparisons
+        true
     }
 }
 
