@@ -226,7 +226,7 @@ impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {
     ) -> bool {
         match self {
             MyWorkflowStepEvent::Immediate(immediate) => {
-                <Immediate as __Event<MyProject, WInner>>::value_is::<WInner, T>(immediate)
+                <_ as __Event<_, WInner>>::value_is::<_, T>(immediate)
             }
         }
     }
