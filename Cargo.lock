@@ -14,7 +14,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "surgeflow-types",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tracing",
  "uuid",
 ]
@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "adapter-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#77a25398883aa9717a8dcd8b5380401b82a9f710"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#2907c0999c74d5dc433624bae50c974b871f00f0"
 dependencies = [
  "surgeflow-types",
 ]
@@ -58,7 +58,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -413,7 +413,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "control-server"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#77a25398883aa9717a8dcd8b5380401b82a9f710"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#2907c0999c74d5dc433624bae50c974b871f00f0"
 dependencies = [
  "adapter-types",
  "aide",
@@ -424,7 +424,7 @@ dependencies = [
  "schemars",
  "serde",
  "surgeflow-types",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tracing",
 ]
 
@@ -692,7 +692,7 @@ dependencies = [
  "serde",
  "sqlx",
  "surgeflow",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -1248,7 +1248,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 [[package]]
 name = "macros"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#77a25398883aa9717a8dcd8b5380401b82a9f710"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#2907c0999c74d5dc433624bae50c974b871f00f0"
 dependencies = [
  "darling 0.20.11",
  "proc-macro-crate",
@@ -1824,7 +1824,7 @@ dependencies = [
  "futures",
  "percent-encoding",
  "serde",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
 ]
 
 [[package]]
@@ -1980,7 +1980,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "smallvec",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -2064,7 +2064,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "stringprep",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tracing",
  "uuid",
  "whoami",
@@ -2102,7 +2102,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "stringprep",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tracing",
  "uuid",
  "whoami",
@@ -2127,7 +2127,7 @@ dependencies = [
  "serde",
  "serde_urlencoded",
  "sqlx-core",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tracing",
  "url",
  "uuid",
@@ -2165,7 +2165,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "surgeflow"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#77a25398883aa9717a8dcd8b5380401b82a9f710"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#2907c0999c74d5dc433624bae50c974b871f00f0"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2175,7 +2175,7 @@ dependencies = [
  "derive_more",
  "macros",
  "surgeflow-types",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "tokio",
  "tower",
  "tower-http",
@@ -2185,13 +2185,13 @@ dependencies = [
 [[package]]
 name = "surgeflow-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#77a25398883aa9717a8dcd8b5380401b82a9f710"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#2907c0999c74d5dc433624bae50c974b871f00f0"
 dependencies = [
  "bon",
  "derive_more",
  "schemars",
  "serde",
- "thiserror 2.0.12",
+ "thiserror 2.0.13",
  "uuid",
 ]
 
@@ -2234,11 +2234,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.12"
+version = "2.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567b8a2dae586314f7be2a752ec7474332959c6460e02bde30d702a66d488708"
+checksum = "c0b43c71ffa7199f8a00fe309ac01551e3c35105b50ceacd7f67ce080ec18fdf"
 dependencies = [
- "thiserror-impl 2.0.12",
+ "thiserror-impl 2.0.13",
 ]
 
 [[package]]
@@ -2254,9 +2254,9 @@ dependencies = [
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.12"
+version = "2.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f7cf42b4507d8ea322120659672cf1b9dbb93f8f2d4ecfd6e51350ff5b17a1d"
+checksum = "c65da2500f2800e48970ef01d47aeb80e328e38adf723def51b5ad1d0a8ca03e"
 dependencies = [
  "proc-macro2",
  "quote",
