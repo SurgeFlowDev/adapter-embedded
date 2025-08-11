@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "adapter-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#7955cb67039949f3bf4de9bf22d0e6f9815a2de6"
 dependencies = [
  "surgeflow-types",
 ]
@@ -413,7 +413,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "control-server"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#7955cb67039949f3bf4de9bf22d0e6f9815a2de6"
 dependencies = [
  "adapter-types",
  "aide",
@@ -1191,15 +1191,26 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.174"
+version = "0.2.175"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
+checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 
 [[package]]
 name = "libm"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
+
+[[package]]
+name = "libredox"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "391290121bad3d37fbddad76d8f5d1c1c314cfc646d143d7e07a3086ddff0ce3"
+dependencies = [
+ "bitflags",
+ "libc",
+ "redox_syscall",
+]
 
 [[package]]
 name = "libsqlite3-sys"
@@ -1237,7 +1248,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 [[package]]
 name = "macros"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#7955cb67039949f3bf4de9bf22d0e6f9815a2de6"
 dependencies = [
  "darling 0.20.11",
  "proc-macro-crate",
@@ -2154,7 +2165,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "surgeflow"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#7955cb67039949f3bf4de9bf22d0e6f9815a2de6"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2174,7 +2185,7 @@ dependencies = [
 [[package]]
 name = "surgeflow-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#598d079ef106284fb1db08bcc181dba7360ace7e"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#7955cb67039949f3bf4de9bf22d0e6f9815a2de6"
 dependencies = [
  "bon",
  "derive_more",
@@ -2528,9 +2539,9 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 
 [[package]]
 name = "uuid"
-version = "1.17.0"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cf4199d1e5d15ddd86a694e4d0dffa9c323ce759fea589f00fef9d81cc1931d"
+checksum = "f33196643e165781c20a5ead5582283a7dacbb87855d867fbc2df3f81eddc1be"
 dependencies = [
  "getrandom 0.3.3",
  "js-sys",
@@ -2655,11 +2666,11 @@ dependencies = [
 
 [[package]]
 name = "whoami"
-version = "1.6.0"
+version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6994d13118ab492c3c80c1f81928718159254c53c472bf9ce36f8dae4add02a7"
+checksum = "5d4a4db5077702ca3015d3d02d74974948aba2ad9e12ab7df718ee64ccd7e97d"
 dependencies = [
- "redox_syscall",
+ "libredox",
  "wasite",
 ]
 

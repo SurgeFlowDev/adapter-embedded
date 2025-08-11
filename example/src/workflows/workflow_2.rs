@@ -3,7 +3,7 @@ use derive_more::{From, TryInto};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
-    __Event, __Step, __Workflow, ArcAppState, EntrypointExt, Immediate, NameExt, Project,
+    __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Immediate, Project,
     ProjectWorkflowControl, StepWithSettings, TryAsRef, TryFromRef, Workflow, WorkflowControl,
     next_step,
     senders::{EventSender, NewInstanceSender},
@@ -32,7 +32,6 @@ pub struct MyProject {
 
 impl Project for MyProject {
     type Workflow = ProjectWorkflow;
-    type ShallowWorkflow = ProjectShallowWorkflow;
 
     fn workflow_for_step(
         &self,
@@ -52,28 +51,27 @@ pub enum ProjectWorkflow {
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
-pub enum ProjectShallowWorkflow {
-    Workflow1,
+pub enum ProjectWorkflowStatic {
+    Workflow1(MyWorkflowStatic),
 }
 
-impl EntrypointExt<MyProject> for ProjectShallowWorkflow {
+impl __WorkflowStatic<MyProject> for ProjectWorkflowStatic {
     fn entrypoint(&self) -> StepWithSettings<MyProject> {
         match self {
-            ProjectShallowWorkflow::Workflow1 => <MyWorkflow as Workflow<MyProject>>::entrypoint(),
+            ProjectWorkflowStatic::Workflow1(w) => w.entrypoint(),
         }
     }
-}
 
-impl NameExt<MyProject> for ProjectShallowWorkflow {
     fn name(&self) -> &'static str {
         match self {
-            ProjectShallowWorkflow::Workflow1 => <MyWorkflow as Workflow<MyProject>>::NAME,
+            ProjectWorkflowStatic::Workflow1(w) => w.name(),
         }
     }
 }
 
 impl __Workflow<MyProject> for ProjectWorkflow {
     type Step = MyProjectWorkflowStep;
+    type WorkflowStatic = ProjectWorkflowStatic;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
@@ -177,11 +175,24 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MyWorkflow;
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct MyWorkflowStatic;
+
+impl __WorkflowStatic<MyProject> for MyWorkflowStatic {
+    fn entrypoint(&self) -> StepWithSettings<MyProject> {
+        MyWorkflow::entrypoint()
+    }
+
+    fn name(&self) -> &'static str {
+        MyWorkflow::NAME
+    }
+}
+
 impl Workflow<MyProject> for MyWorkflow {
     const NAME: &'static str = "MyWorkflow";
-    const SHALLOW_WORKFLOW: <MyProject as Project>::ShallowWorkflow =
-        ProjectShallowWorkflow::Workflow1;
     type Step = MyWorkflowStep;
+    type WorkflowStatic = MyWorkflowStatic;
+    const WORKFLOW_STATIC: <Self as __Workflow<MyProject>>::WorkflowStatic = MyWorkflowStatic;
 
     fn entrypoint() -> StepWithSettings<MyProject> {
         let step = <Self as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step0(MyStep));

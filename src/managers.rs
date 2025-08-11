@@ -1,8 +1,8 @@
-use papaya::HashMap;
-use std::{marker::PhantomData, sync::Arc};
-
 use super::EmbeddedAdapterError;
 use adapter_types::managers::StepsAwaitingEventManager;
+use papaya::HashMap;
+use std::{marker::PhantomData, sync::Arc};
+use surgeflow_types::__WorkflowStatic;
 use surgeflow_types::{FullyQualifiedStep, Project, WorkflowInstanceId};
 
 #[derive(Clone)]
@@ -51,7 +51,8 @@ mod persistence_manager {
     use sqlx::{SqlitePool, query};
 
     use adapter_types::managers::PersistenceManager;
-    use surgeflow_types::{NameExt, Project, StepId, WorkflowInstance, WorkflowInstanceId, __Workflow};
+    use surgeflow_types::__WorkflowStatic;
+    use surgeflow_types::{__Workflow, Project, StepId, WorkflowInstance, WorkflowInstanceId};
 
     use crate::EmbeddedAdapterError;
 
