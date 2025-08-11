@@ -44,10 +44,6 @@ impl Project for MyProject {
             }
         }
     }
-
-    // fn workflow<T: __Workflow<Self>>() -> Self::Workflow {
-    //     todo!()
-    // }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
@@ -78,8 +74,6 @@ impl NameExt<MyProject> for ProjectShallowWorkflow {
 
 impl __Workflow<MyProject> for ProjectWorkflow {
     type Step = MyProjectWorkflowStep;
-
-    
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, From, TryInto)]
