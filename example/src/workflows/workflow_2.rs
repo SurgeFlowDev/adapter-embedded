@@ -321,9 +321,13 @@ impl Step<MyProject, MyWorkflow> for MyStep {
         <Self as __Step<MyProject, MyWorkflow>>::Error,
     > {
         tracing::info!("Running MyStep with event: {:?}", event);
-        let step =
-            <MyWorkflow as __Workflow<MyProject>>::Step::from(MyWorkflowStep::Step2(MyAnotherStep));
-        Ok(Some(next_step(step).max_retries(0).event(Immediate).call()))
+
+        Ok(Some(
+            next_step(MyAnotherStep)
+                .max_retries(0)
+                .event(Immediate)
+                .call(),
+        ))
     }
 }
 
