@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "adapter-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6c4bfe747aac7820eebfea5bc334863eb90c922b"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#4229e87d387019e4cacb3721b3d3097fb0f2ec16"
 dependencies = [
  "surgeflow-types",
 ]
@@ -413,7 +413,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "control-server"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6c4bfe747aac7820eebfea5bc334863eb90c922b"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#4229e87d387019e4cacb3721b3d3097fb0f2ec16"
 dependencies = [
  "adapter-types",
  "aide",
@@ -1248,7 +1248,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 [[package]]
 name = "macros"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6c4bfe747aac7820eebfea5bc334863eb90c922b"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#4229e87d387019e4cacb3721b3d3097fb0f2ec16"
 dependencies = [
  "darling 0.20.11",
  "proc-macro-crate",
@@ -2165,7 +2165,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "surgeflow"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6c4bfe747aac7820eebfea5bc334863eb90c922b"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#4229e87d387019e4cacb3721b3d3097fb0f2ec16"
 dependencies = [
  "adapter-types",
  "aide",
@@ -2185,7 +2185,7 @@ dependencies = [
 [[package]]
 name = "surgeflow-types"
 version = "0.1.0"
-source = "git+https://github.com/Zizico2/rust-workflow-2.git#6c4bfe747aac7820eebfea5bc334863eb90c922b"
+source = "git+https://github.com/Zizico2/rust-workflow-2.git#4229e87d387019e4cacb3721b3d3097fb0f2ec16"
 dependencies = [
  "bon",
  "derive_more",
@@ -2197,9 +2197,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.104"
+version = "2.0.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17b6f705963418cdb9927482fa304bc562ece2fdd4f616084c50b7023b435a40"
+checksum = "7bc3fcb250e53458e712715cf74285c1f889686520d79294a9ef3bd7aa1fc619"
 dependencies = [
  "proc-macro2",
  "quote",

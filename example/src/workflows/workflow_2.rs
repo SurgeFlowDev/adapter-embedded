@@ -121,7 +121,11 @@ impl TryFromRef<MyProjectWorkflowStepEvent> for MyProjectWorkflowStepEvent {
     }
 }
 
-impl __Event<MyProject, ProjectWorkflow> for MyProjectWorkflowStepEvent {}
+impl __Event<MyProject, ProjectWorkflow> for MyProjectWorkflowStepEvent {
+    fn maybe_init() -> Option<Self> {
+        None
+    }
+}
 
 impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
     type Event = MyProjectWorkflowStepEvent;
@@ -183,6 +187,12 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
             ) => step.event_is_event(&(*event).into()),
         }
     }
+
+    fn init_event(&self) -> Option<Self::Event> {
+        match self {
+            MyProjectWorkflowStep::Workflow1(step) => step.init_event().map(Into::into),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -215,7 +225,11 @@ pub enum MyWorkflowStepEvent {
     Immediate(Immediate),
 }
 
-impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {}
+impl __Event<MyProject, MyWorkflow> for MyWorkflowStepEvent {
+    fn maybe_init() -> Option<Self> {
+        None
+    }
+}
 
 // identity conversion
 impl TryFromRef<MyWorkflowStepEvent> for MyWorkflowStepEvent {
@@ -270,6 +284,13 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
             },
         }
     }
+
+    fn init_event(&self) -> Option<Self::Event> {
+        match self {
+            MyWorkflowStep::Step1(step) => step.init_event().map(Into::into),
+            MyWorkflowStep::Step2(step) => step.init_event().map(Into::into),
+        }
+    }
 }
 
 impl TryFromRef<MyWorkflowStepEvent> for MyEvent {
@@ -301,16 +322,15 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
     > {
         tracing::info!("Running MyStep with event: {:?}", event);
 
-        Ok(Some(
-            next_step(MyAnotherStep)
-                .max_retries(0)
-                .event(Immediate)
-                .call(),
-        ))
+        Ok(Some(next_step(MyAnotherStep).max_retries(0).call()))
     }
 
     fn event_is_event(&self, ev: &Self::Event) -> bool {
         true
+    }
+
+    fn init_event(&self) -> Option<Self::Event> {
+        __Event::maybe_init()
     }
 }
 
@@ -359,6 +379,10 @@ impl __Step<ProjectAlias, WorkflowAlias> for MyAnotherStep {
         // this check, on the bare step is always true since we're only comparing the type
         // TODO: we could allow custom logic here, or use PartialEq, to allow the user to make value-based comparisons
         true
+    }
+
+    fn init_event(&self) -> Option<Self::Event> {
+        __Event::<ProjectAlias, WorkflowAlias>::maybe_init()
     }
 }
 
