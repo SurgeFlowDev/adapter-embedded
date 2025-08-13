@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use surgeflow::{
     __Event, __Step, __Workflow, __WorkflowStatic, ArcAppState, Event, Immediate, Project,
-    ProjectWorkflowControl, RawStep, Step, TryAsRef, TryFromRef, Workflow, WorkflowControl,
-    next_step,
+    ProjectWorkflowControl, RawStep, TryAsRef, TryFromRef, Workflow, WorkflowControl, next_step,
     senders::{EventSender, NewInstanceSender},
 };
 
@@ -154,6 +153,18 @@ impl __Step<MyProject, ProjectWorkflow> for MyProjectWorkflowStep {
                         })?,
                     )
                     .await
+                    .map(|step| {
+                        step.map(|step| {
+                            // TODO: there should be some custom Into<> trait
+                            // I can't use `Into::into` because of the identity implementation in the core library
+                            // it conflicts with the generic implementation
+                            RawStep::<MyProject, <MyProject as Project>::Workflow> {
+                                step: step.step.into(),
+                                event: step.event.map(Into::into),
+                                settings: step.settings,
+                            }
+                        })
+                    })
             }
         }
     }
@@ -225,7 +236,7 @@ impl __Step<MyProject, MyWorkflow> for MyWorkflowStep {
         wf: MyWorkflow,
         event: Self::Event,
     ) -> Result<
-        Option<RawStep<MyProject, <MyProject as Project>::Workflow>>,
+        Option<RawStep<MyProject, MyWorkflow>>,
         <Self as __Step<MyProject, MyWorkflow>>::Error,
     > {
         tracing::info!("Running MyWorkflowStep with event: {:?}", event);
@@ -283,39 +294,7 @@ impl __Step<MyProject, MyWorkflow> for MyStep {
     async fn run(
         &self,
         wf: MyWorkflow,
-        event: Self::Event,
-    ) -> Result<
-        Option<RawStep<MyProject, <MyProject as Project>::Workflow>>,
-        <Self as __Step<MyProject, MyWorkflow>>::Error,
-    > {
-        Step::run(self, wf, event).await.map(|step| {
-            step.map(|step| {
-                // TODO: there should be some custom Into<> trait
-                // I can't use `Into::into` because of the identity implementation in the core library
-                // it conflicts with the generic implementation
-                RawStep::<MyProject, <MyProject as Project>::Workflow> {
-                    step: step.step.into(),
-                    event: step.event.map(Into::into),
-                    settings: step.settings,
-                }
-            })
-        })
-    }
-
-    fn event_is_event(&self, ev: &Self::Event) -> bool {
-        <Self as Step<MyProject, MyWorkflow>>::event_is_event(self, ev)
-    }
-}
-
-impl Step<MyProject, MyWorkflow> for MyStep {
-    type Event = MyEvent;
-
-    type Error = TempError;
-
-    async fn run(
-        &self,
-        wf: MyWorkflow,
-        event: <Self as Step<MyProject, MyWorkflow>>::Event,
+        event: <Self as __Step<MyProject, MyWorkflow>>::Event,
     ) -> Result<
         Option<RawStep<MyProject, MyWorkflow>>,
         <Self as __Step<MyProject, MyWorkflow>>::Error,
@@ -328,6 +307,10 @@ impl Step<MyProject, MyWorkflow> for MyStep {
                 .event(Immediate)
                 .call(),
         ))
+    }
+
+    fn event_is_event(&self, ev: &Self::Event) -> bool {
+        true
     }
 }
 
@@ -352,18 +335,21 @@ impl TryFromRef<MyWorkflowStepEvent> for Immediate {
     }
 }
 
-impl __Step<MyProject, MyWorkflow> for MyAnotherStep {
+type WorkflowAlias = MyWorkflow;
+type ProjectAlias = MyProject;
+
+impl __Step<ProjectAlias, WorkflowAlias> for MyAnotherStep {
     type Event = Immediate;
 
     type Error = TempError;
 
     async fn run(
         &self,
-        wf: MyWorkflow,
+        wf: WorkflowAlias,
         event: Self::Event,
     ) -> Result<
-        Option<RawStep<MyProject, <MyProject as Project>::Workflow>>,
-        <Self as __Step<MyProject, MyWorkflow>>::Error,
+        Option<RawStep<ProjectAlias, WorkflowAlias>>,
+        <Self as __Step<ProjectAlias, WorkflowAlias>>::Error,
     > {
         tracing::info!("Running MyStep with event: {:?}", event);
         Ok(None)
